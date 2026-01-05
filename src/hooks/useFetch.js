@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import axiosClient from '@/services/axiosClient';
+import api from '@/services/api';
 
 /**
  * Custom hook để fetch data từ API
@@ -16,7 +16,7 @@ const useFetch = (url, options = { immediate: true }) => {
         setError(null);
 
         try {
-            const response = await axiosClient.get(url, { params });
+            const response = await api.get(url, { params });
             setData(response);
             return response;
         } catch (err) {

@@ -1,78 +1,57 @@
-import axiosClient from './axiosClient';
+import api from './api';
 
 /**
- * Summarize Service - API endpoints cho tóm tắt văn bản
+ * Summarize Service - Gọi các API tóm tắt văn bản
  */
 const summarizeService = {
-    /**
-     * Tóm tắt văn bản tự động
-     * @param {string} text - Văn bản gốc cần tóm tắt
-     * @param {object} options - Các tùy chọn (model, max_length, etc.)
-     */
-    summarize: async (text, options = {}) => {
-        const response = await axiosClient.post('/summarize', {
-            text,
-            ...options
-        });
-        return response;
-    },
+    // BART-cnn (English)
+    basic: (text, options = {}) =>
+        api.post('/summarize', { text, ...options }),
 
-    /**
-     * Đánh giá chất lượng bản tóm tắt
-     * @param {string} original - Văn bản gốc
-     * @param {string} summary - Bản tóm tắt cần đánh giá
-     * @param {string} reference - Bản tóm tắt tham chiếu (nếu có)
-     */
-    evaluate: async (original, summary, reference = null) => {
-        const response = await axiosClient.post('/evaluate', {
-            original,
-            summary,
-            reference,
-        });
-        return response;
-    },
+    balanced: (text, options = {}) =>
+        api.post('/summarize/balanced', { text, ...options }),
 
-    /**
-     * Tóm tắt và đánh giá cùng lúc
-     * @param {string} text - Văn bản gốc
-     * @param {string} reference - Bản tóm tắt tham chiếu (tùy chọn)
-     */
-    summarizeAndEvaluate: async (text, reference = null) => {
-        const response = await axiosClient.post('/summarize-evaluate', {
-            text,
-            reference,
-        });
-        return response;
-    },
+    detailed: (text, options = {}) =>
+        api.post('/summarize/detailed', { text, ...options }),
 
-    /**
-     * Lấy lịch sử tóm tắt
-     * @param {number} page - Trang hiện tại
-     * @param {number} limit - Số item mỗi trang
-     */
-    getHistory: async (page = 1, limit = 10) => {
-        const response = await axiosClient.get('/summarize/history', {
-            params: { page, limit },
-        });
-        return response;
-    },
+    // ViT5 Finetuned (Vietnamese)
+    multilingual: (text, options = {}) =>
+        api.post('/summarize/multilingual', { text, ...options }),
 
-    /**
-     * Lấy thống kê tổng quan
-     */
-    getStats: async () => {
-        const response = await axiosClient.get('/summarize/stats');
-        return response;
-    },
+    // PhoBERT Extractive
+    extractive: (text, options = {}) =>
+        api.post('/summarize/extractive', { text, ...options }),
 
-    /**
-     * Lấy chi tiết một bài tóm tắt
-     * @param {string} id - ID của bài tóm tắt
-     */
-    getDetail: async (id) => {
-        const response = await axiosClient.get(`/summarize/${id}`);
-        return response;
-    },
+    chunked: (text, options = {}) =>
+        api.post('/summarize/chunked', { text, ...options }),
+
+    smart: (text, options = {}) =>
+        api.post('/summarize/smart', { text, ...options }),
+
+    // Hybrid models
+    hybrid: (text, options = {}) =>
+        api.post('/summarize/hybrid', { text, ...options }),
+
+    hybridBartpho: (text, options = {}) =>
+        api.post('/summarize/hybrid-bartpho', { text, ...options }),
+
+    hybridVit5: (text, options = {}) =>
+        api.post('/summarize/hybrid-vit5', { text, ...options }),
+
+    hybridParaphrase: (text, options = {}) =>
+        api.post('/summarize/hybrid-phobert-paraphrase', { text, ...options }),
+
+    // BARTpho
+    bartpho: (text, options = {}) =>
+        api.post('/summarize/bartpho', { text, ...options }),
+
+    paraphrase: (text, options = {}) =>
+        api.post('/summarize/bartpho/paraphrase', { text, ...options }),
+
+    // Model info
+    getMultilingualInfo: () => api.get('/summarize/multilingual/info'),
+    getExtractiveInfo: () => api.get('/summarize/extractive/info'),
+    getHybridInfo: () => api.get('/summarize/hybrid/info'),
 };
 
 export default summarizeService;

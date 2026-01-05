@@ -2,7 +2,7 @@
 export const APP_CONFIG = {
     // API
     API_URL: import.meta.env.VITE_API_URL || 'http://localhost:3000',
-    API_TIMEOUT: 30000, // 30 seconds
+    API_TIMEOUT: 120000, // 120 seconds - cho phép model load lâu
 
     // App Info
     APP_NAME: import.meta.env.VITE_APP_NAME || 'My React App',

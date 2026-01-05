@@ -1,12 +1,14 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks';
 import { Button, Input } from '@/components/common';
 
 /**
- * Login Page - Update to Tailwind CSS
+ * Login Page - Authentication with JWT
  */
 const Login = () => {
-    const { login } = useAuth();
+    const navigate = useNavigate();
+    const { login, isLoading: authLoading } = useAuth();
     const [formData, setFormData] = useState({
         email: '',
         password: ''
@@ -17,8 +19,16 @@ const Login = () => {
 
     const validate = () => {
         const tempErrors = {};
-        if (!formData.email) tempErrors.email = 'Vui lòng nhập email';
-        if (!formData.password) tempErrors.password = 'Vui lòng nhập mật khẩu';
+        if (!formData.email) {
+            tempErrors.email = 'Vui lòng nhập email';
+        } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+            tempErrors.email = 'Email không hợp lệ';
+        }
+        if (!formData.password) {
+            tempErrors.password = 'Vui lòng nhập mật khẩu';
+        } else if (formData.password.length < 6) {
+            tempErrors.password = 'Mật khẩu phải có ít nhất 6 ký tự';
+        }
         setErrors(tempErrors);
         return Object.keys(tempErrors).length === 0;
     };
@@ -31,8 +41,14 @@ const Login = () => {
 
         setIsLoading(true);
         try {
-            await login(formData.email, formData.password);
-            // Redirect handled by AuthContext/AppRouter
+            const result = await login(formData.email, formData.password);
+
+            if (result.success) {
+                // Redirect to home/dashboard on success
+                navigate('/', { replace: true });
+            } else {
+                setGeneralError(result.error);
+            }
         } catch (error) {
             setGeneralError(error.message || 'Đăng nhập thất bại');
         } finally {
@@ -50,7 +66,12 @@ const Login = () => {
         if (errors[name]) {
             setErrors(prev => ({ ...prev, [name]: '' }));
         }
+        if (generalError) {
+            setGeneralError('');
+        }
     };
+
+    const loading = isLoading || authLoading;
 
     return (
         <div className="login-container">
@@ -60,7 +81,7 @@ const Login = () => {
             </div>
 
             {generalError && (
-                <div className="bg-red-50 text-red-500 p-3 rounded-lg mb-6 text-sm text-center border border-red-100">
+                <div className="bg-red-50 text-red-600 p-3 rounded-lg mb-6 text-sm text-center border border-red-200">
                     {generalError}
                 </div>
             )}
@@ -75,6 +96,7 @@ const Login = () => {
                     onChange={handleChange}
                     error={errors.email}
                     autoFocus
+                    disabled={loading}
                 />
 
                 <Input
@@ -85,6 +107,7 @@ const Login = () => {
                     value={formData.password}
                     onChange={handleChange}
                     error={errors.password}
+                    disabled={loading}
                 />
 
                 <div className="flex items-center justify-between text-sm">
@@ -101,7 +124,7 @@ const Login = () => {
                     type="submit"
                     fullWidth
                     size="lg"
-                    loading={isLoading}
+                    loading={loading}
                     className="mt-2 bg-gradient-to-r from-blue-600 to-purple-600 shadow-lg shadow-blue-500/30 border-0"
                 >
                     Đăng nhập
@@ -112,6 +135,13 @@ const Login = () => {
                     <a href="/register" className="text-blue-600 hover:text-blue-700 font-semibold hover:underline">
                         Đăng ký ngay
                     </a>
+                </div>
+
+                {/* Dev hint */}
+                <div className="mt-4 p-3 bg-slate-50 rounded-lg text-xs text-slate-500">
+                    <p className="font-medium mb-1">🧪 Test account:</p>
+                    <p>Email: test@example.com</p>
+                    <p>Password: secret123</p>
                 </div>
             </form>
         </div>

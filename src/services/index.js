@@ -1,4 +1,8 @@
 // Export tất cả services
-export { default as axiosClient } from './axiosClient';
+// API Client (HTTP wrapper)
+export { default as api } from './api';
+
+// Service Layer
 export { default as authService } from './authService';
 export { default as summarizeService } from './summarizeService';
+export { default as evaluationService } from './evaluationService';

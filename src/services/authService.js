@@ -1,54 +1,27 @@
-import axiosClient from './axiosClient';
+import api from './api';
 
-// Auth API endpoints
+/**
+ * Auth Service - Gọi các API authentication
+ * Sử dụng api client wrapper
+ */
 const authService = {
-    // Đăng nhập
-    login: async (email, password) => {
-        const response = await axiosClient.post('/auth/login', { email, password });
-        return response;
-    },
+    login: (email, password) =>
+        api.post('/auth/login', { email, password }),
 
-    // Đăng ký
-    register: async (userData) => {
-        const response = await axiosClient.post('/auth/register', userData);
-        return response;
-    },
+    register: (userData) =>
+        api.post('/auth/register', userData),
 
-    // Đăng xuất
-    logout: async () => {
-        const response = await axiosClient.post('/auth/logout');
-        return response;
-    },
+    logout: () =>
+        api.post('/auth/logout'),
 
-    // Lấy thông tin user hiện tại
-    getCurrentUser: async () => {
-        const response = await axiosClient.get('/auth/me');
-        return response;
-    },
+    me: () =>
+        api.get('/auth/me'),
 
-    // Đổi mật khẩu
-    changePassword: async (oldPassword, newPassword) => {
-        const response = await axiosClient.post('/auth/change-password', {
-            oldPassword,
-            newPassword,
-        });
-        return response;
-    },
+    refresh: (refreshToken) =>
+        api.post('/auth/refresh', { refresh_token: refreshToken }),
 
-    // Quên mật khẩu
-    forgotPassword: async (email) => {
-        const response = await axiosClient.post('/auth/forgot-password', { email });
-        return response;
-    },
-
-    // Reset mật khẩu
-    resetPassword: async (token, newPassword) => {
-        const response = await axiosClient.post('/auth/reset-password', {
-            token,
-            newPassword,
-        });
-        return response;
-    },
+    seedTestUser: () =>
+        api.post('/auth/seed-test-user'),
 };
 
 export default authService;

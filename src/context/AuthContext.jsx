@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { APP_CONFIG } from '@/config/constants';
 import { authService } from '@/services';
 
@@ -15,17 +15,37 @@ export const AuthProvider = ({ children }) => {
     useEffect(() => {
         const checkAuth = async () => {
             const token = localStorage.getItem(APP_CONFIG.STORAGE_KEYS.ACCESS_TOKEN);
+            const storedUser = localStorage.getItem(APP_CONFIG.STORAGE_KEYS.USER_INFO);
 
             if (token) {
+                // Trước tiên, load user từ localStorage để UI hiển thị ngay
+                if (storedUser) {
+                    try {
+                        const parsedUser = JSON.parse(storedUser);
+                        setUser(parsedUser);
+                        setIsAuthenticated(true);
+                    } catch (e) {
+                        console.error('Failed to parse stored user:', e);
+                    }
+                }
+
                 try {
-                    const userData = await authService.getCurrentUser();
+                    // Sau đó verify với server và cập nhật user mới nhất
+                    const userData = await authService.me();
                     setUser(userData);
                     setIsAuthenticated(true);
+                    // Cập nhật localStorage với data mới
+                    localStorage.setItem(APP_CONFIG.STORAGE_KEYS.USER_INFO, JSON.stringify(userData));
                 } catch (error) {
                     console.error('Auth check failed:', error);
-                    // Token không hợp lệ, xóa khỏi storage
-                    localStorage.removeItem(APP_CONFIG.STORAGE_KEYS.ACCESS_TOKEN);
-                    localStorage.removeItem(APP_CONFIG.STORAGE_KEYS.USER_INFO);
+                    // Nếu API fail nhưng có stored user, giữ session (offline mode)
+                    if (!storedUser) {
+                        localStorage.removeItem(APP_CONFIG.STORAGE_KEYS.ACCESS_TOKEN);
+                        localStorage.removeItem(APP_CONFIG.STORAGE_KEYS.REFRESH_TOKEN);
+                        localStorage.removeItem(APP_CONFIG.STORAGE_KEYS.USER_INFO);
+                        setUser(null);
+                        setIsAuthenticated(false);
+                    }
                 }
             }
 
@@ -36,34 +56,38 @@ export const AuthProvider = ({ children }) => {
     }, []);
 
     // Đăng nhập
-    const login = async (email, password) => {
+    const login = useCallback(async (email, password) => {
         setIsLoading(true);
         try {
             const response = await authService.login(email, password);
 
-            // Lưu token và user info
-            localStorage.setItem(APP_CONFIG.STORAGE_KEYS.ACCESS_TOKEN, response.accessToken);
-            if (response.refreshToken) {
-                localStorage.setItem(APP_CONFIG.STORAGE_KEYS.REFRESH_TOKEN, response.refreshToken);
-            }
-            localStorage.setItem(APP_CONFIG.STORAGE_KEYS.USER_INFO, JSON.stringify(response.user));
+            // Response format: { access_token, refresh_token, token_type, user }
+            const { access_token, refresh_token, user: userData } = response;
 
-            setUser(response.user);
+            // Lưu tokens
+            localStorage.setItem(APP_CONFIG.STORAGE_KEYS.ACCESS_TOKEN, access_token);
+            localStorage.setItem(APP_CONFIG.STORAGE_KEYS.REFRESH_TOKEN, refresh_token);
+            localStorage.setItem(APP_CONFIG.STORAGE_KEYS.USER_INFO, JSON.stringify(userData));
+
+            setUser(userData);
             setIsAuthenticated(true);
 
-            return { success: true };
+            return { success: true, user: userData };
         } catch (error) {
+            const errorMessage = error.response?.data?.detail ||
+                error.response?.data?.message ||
+                'Đăng nhập thất bại';
             return {
                 success: false,
-                error: error.response?.data?.message || 'Đăng nhập thất bại'
+                error: errorMessage
             };
         } finally {
             setIsLoading(false);
         }
-    };
+    }, []);
 
     // Đăng xuất
-    const logout = async () => {
+    const logout = useCallback(async () => {
         try {
             await authService.logout();
         } catch (error) {
@@ -76,23 +100,26 @@ export const AuthProvider = ({ children }) => {
             setUser(null);
             setIsAuthenticated(false);
         }
-    };
+    }, []);
 
     // Đăng ký
-    const register = async (userData) => {
+    const register = useCallback(async (userData) => {
         setIsLoading(true);
         try {
             const response = await authService.register(userData);
             return { success: true, data: response };
         } catch (error) {
+            const errorMessage = error.response?.data?.detail ||
+                error.response?.data?.message ||
+                'Đăng ký thất bại';
             return {
                 success: false,
-                error: error.response?.data?.message || 'Đăng ký thất bại'
+                error: errorMessage
             };
         } finally {
             setIsLoading(false);
         }
-    };
+    }, []);
 
     const value = {
         user,
