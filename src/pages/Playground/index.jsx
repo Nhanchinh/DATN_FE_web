@@ -27,6 +27,13 @@ const MODEL_OPTIONS = [
         badge: '🔥 Best'
     },
     {
+        value: 'hybrid_paraphrase',
+        label: 'Hybrid Paraphrase (PhoBERT + ViT5)',
+        description: 'Extract 4 câu + Single-pass Rewrite 🔥',
+        endpoint: '/summarize/hybrid-phobert-paraphrase',
+        badge: '⭐ Smooth'
+    },
+    {
         value: 'hybrid',
         label: 'Hybrid (PhoBERT + mT5)',
         description: 'Trích xuất + Viết lại - Văn phong tự nhiên',
@@ -36,14 +43,14 @@ const MODEL_OPTIONS = [
     {
         value: 'hybrid_vit5',
         label: 'Hybrid (PhoBERT + ViT5)',
-        description: 'Trích xuất + ViT5 paraphrase',
+        description: 'Trích xuất + ViT5 smooth từng câu',
         endpoint: '/summarize/hybrid-vit5',
         badge: null
     },
     {
         value: 'hybrid_bartpho',
         label: 'Hybrid (PhoBERT + BARTpho)',
-        description: 'Trích xuất + BARTpho rewrite',
+        description: 'Trích xuất + BARTpho fusion',
         endpoint: '/summarize/hybrid-bartpho',
         badge: null
     },
@@ -60,6 +67,13 @@ const MODEL_OPTIONS = [
         description: 'Seq2Seq tiếng Việt tự nhiên',
         endpoint: '/summarize/bartpho',
         badge: null
+    },
+    {
+        value: 'vietnews',
+        label: 'VietNews (VinAI Official)',
+        description: 'Chuyên trị tin tức, báo chí (Abstractive)',
+        endpoint: '/summarize/vietnews',
+        badge: '📰 News'
     },
     {
         value: 'extractive',
@@ -129,12 +143,14 @@ const Playground = () => {
             const endTime = Date.now();
             const timeSeconds = ((endTime - startTime) / 1000).toFixed(1);
 
-            // Handle different response formats
+            // Handle different response formats from various endpoints
             const summaryText = response.summary ||
                 response.final_summary ||
+                response.stage2_final ||  // hybrid-phobert-paraphrase
+                response.stage2_rewritten ||  // hybrid endpoints
                 response.rewritten_text ||
                 response.text ||
-                (typeof response === 'string' ? response : JSON.stringify(response));
+                (typeof response === 'string' ? response : '');
 
             setOutput(summaryText);
 
