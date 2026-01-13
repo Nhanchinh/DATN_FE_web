@@ -1,5 +1,6 @@
+
 import { useState, useRef } from 'react';
-import { UploadCloud, FileText, Database, Settings2, Loader2, AlertCircle, CheckCircle } from 'lucide-react';
+import { UploadCloud, FileText, Database, Settings2, Loader2, AlertCircle, CheckCircle, Download, FileSpreadsheet } from 'lucide-react';
 import { Button } from '@/components/common';
 import { summarizeService } from '@/services';
 
@@ -33,6 +34,18 @@ const BatchEval = () => {
         }
     };
 
+    const handleDownloadTemplate = () => {
+        const csvContent = "\uFEFFtext,reference\n\"Trí tuệ nhân tạo đang thay đổi thế giới...\",\"AI đang đổi mới...\"\n\"Deep learning là một phần của AI...\",\"Deep learning là tập con của AI...\"";
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', 'sample_dataset.csv');
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
     const handleUpload = async () => {
         if (!file) return;
 
@@ -41,7 +54,6 @@ const BatchEval = () => {
         setResult(null);
 
         try {
-            // Call API
             const response = await summarizeService.batchUpload(file, model);
             setResult(response);
         } catch (err) {
@@ -62,45 +74,85 @@ const BatchEval = () => {
     };
 
     return (
-        <div className="max-w-6xl mx-auto space-y-6">
-            <div className="flex justify-between items-end">
+        <div className="max-w-5xl mx-auto space-y-8 pb-10">
+            {/* Header */}
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-slate-200 pb-6">
                 <div>
-                    <h1 className="text-2xl font-bold text-slate-800">Dataset Evaluation</h1>
-                    <p className="text-slate-500 mt-1">Run models on large datasets (CSV/Excel) to benchmark performance.</p>
+                    <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Dataset Evaluation</h1>
+                    <p className="text-slate-500 mt-2 text-lg">Run batch summarization on large datasets to benchmark performance.</p>
                 </div>
+                <Button
+                    variant="outline"
+                    className="gap-2 bg-white border-slate-300 text-slate-700 hover:bg-blue-600 hover:text-white hover:border-blue-600 shadow-sm transition-all"
+                    onClick={handleDownloadTemplate}
+                >
+                    <Download className="w-4 h-4" />
+                    <span>Download Template</span>
+                </Button>
             </div>
 
-            {/* Config & Upload Zone */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {/* Configuration */}
-                <div className="md:col-span-1 bg-white p-6 rounded-xl border border-slate-200 shadow-sm h-fit">
-                    <h3 className="font-semibold text-slate-800 flex items-center gap-2 mb-4">
-                        <Settings2 className="w-4 h-4" /> Configuration
-                    </h3>
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                {/* Left Column: Configuration & Help */}
+                <div className="lg:col-span-4 space-y-6">
+                    {/* Config Card */}
+                    <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                        <h3 className="font-semibold text-slate-900 flex items-center gap-2 mb-6 text-lg">
+                            <Settings2 className="w-5 h-5 text-slate-500" /> Configuration
+                        </h3>
 
-                    <div className="space-y-4">
-                        <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1">Model</label>
-                            <select
-                                value={model}
-                                onChange={(e) => setModel(e.target.value)}
-                                disabled={isLoading}
-                                className="w-full bg-slate-50 border border-slate-200 text-slate-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5"
-                            >
-                                <option value="phobert_vit5">PhoBERT + ViT5 Hybrid</option>
-                                <option value="vit5">ViT5 Fine-tuned</option>
-                                <option value="qwen">Qwen 2.5-7B</option>
-                            </select>
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-2">Select Model</label>
+                                <div className="relative">
+                                    <select
+                                        value={model}
+                                        onChange={(e) => setModel(e.target.value)}
+                                        disabled={isLoading}
+                                        className="w-full appearance-none bg-slate-50 border border-slate-200 text-slate-900 text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 p-3 pr-8"
+                                    >
+                                        <option value="phobert_vit5">PhoBERT + ViT5 Hybrid (Best)</option>
+                                        <option value="vit5">ViT5 Fine-tuned (Fast)</option>
+                                        <option value="qwen">Qwen 2.5-7B (LLM)</option>
+                                    </select>
+                                    <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+                                        <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                                    </div>
+                                </div>
+                                <p className="text-xs text-slate-500 mt-2">
+                                    Choose the underlying model for summarization tasks.
+                                </p>
+                            </div>
                         </div>
+                    </div>
+
+                    {/* Guidelines Card */}
+                    <div className="bg-blue-50/50 border border-blue-100 rounded-2xl p-6">
+                        <h4 className="font-semibold text-blue-900 mb-3 flex items-center gap-2">
+                            <FileSpreadsheet className="w-4 h-4" /> Data Format
+                        </h4>
+                        <ul className="text-sm text-blue-800 space-y-3">
+                            <li className="flex items-start gap-2">
+                                <span className="bg-blue-100 text-blue-600 rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">1</span>
+                                <span>File extension: <strong>.csv</strong> or <strong>.xlsx</strong></span>
+                            </li>
+                            <li className="flex items-start gap-2">
+                                <span className="bg-blue-100 text-blue-600 rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">2</span>
+                                <div>Column 1 header: <code className="bg-white border border-blue-200 px-1 py-0.5 rounded text-xs font-mono">text</code> <span className="text-xs opacity-75">(required)</span></div>
+                            </li>
+                            <li className="flex items-start gap-2">
+                                <span className="bg-blue-100 text-blue-600 rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">3</span>
+                                <div>Column 2 header: <code className="bg-white border border-blue-200 px-1 py-0.5 rounded text-xs font-mono">reference</code> <span className="text-xs opacity-75">(optional)</span></div>
+                            </li>
+                        </ul>
                     </div>
                 </div>
 
-                {/* Upload Area */}
-                <div className="md:col-span-2">
+                {/* Right Column: Upload & Results */}
+                <div className="lg:col-span-8">
                     {!file ? (
                         <div
                             onClick={() => fileInputRef.current?.click()}
-                            className="border-2 border-dashed border-slate-300 rounded-xl p-12 text-center bg-slate-50 hover:bg-slate-100 hover:border-blue-400 transition-all cursor-pointer group h-full flex flex-col items-center justify-center"
+                            className="h-full min-h-[400px] border-2 border-dashed border-slate-300 rounded-2xl bg-slate-50/50 hover:bg-blue-50/30 hover:border-blue-400 transition-all cursor-pointer group flex flex-col items-center justify-center relative overflow-hidden"
                         >
                             <input
                                 type="file"
@@ -109,44 +161,58 @@ const BatchEval = () => {
                                 accept=".csv,.xlsx,.xls"
                                 onChange={handleFileChange}
                             />
-                            <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                                <UploadCloud className="w-8 h-8" />
+
+                            <div className="relative z-10 text-center p-8">
+                                <div className="w-20 h-20 bg-white text-blue-600 rounded-full shadow-sm flex items-center justify-center mx-auto mb-6 group-hover:scale-110 group-hover:text-blue-700 transition-all duration-300">
+                                    <UploadCloud className="w-10 h-10" />
+                                </div>
+                                <h3 className="text-xl font-bold text-slate-800 mb-3 group-hover:text-blue-700 transition-colors">Drag & Drop or Click to Upload</h3>
+                                <p className="text-slate-500 mb-6 max-w-sm mx-auto">Upload your dataset to start the automatic evaluation process.</p>
+                                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-200/50 text-xs font-medium text-slate-600">
+                                    <FileText className="w-3 h-3" /> Max file size: 10MB
+                                </div>
                             </div>
-                            <h3 className="text-lg font-semibold text-slate-700 mb-2">Click to upload dataset</h3>
-                            <p className="text-slate-500 text-sm mb-4">CSV or Excel files (.csv, .xlsx)</p>
-                            <div className="flex items-center gap-2 text-xs text-slate-400">
-                                <span className="flex items-center gap-1">
-                                    <FileText className="w-3 h-3" /> Max 10MB
-                                </span>
+
+                            {/* Decorative Pattern */}
+                            <div className="absolute inset-0 opacity-[0.03] pointer-events-none"
+                                style={{ backgroundImage: 'radial-gradient(#475569 1px, transparent 1px)', backgroundSize: '24px 24px' }}>
                             </div>
                         </div>
                     ) : (
-                        <div className="bg-white border border-slate-200 rounded-xl p-6 h-full flex flex-col items-center justify-center">
-                            <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mb-4">
-                                <FileText className="w-8 h-8" />
+                        <div className="bg-white border border-slate-200 rounded-2xl p-8 h-full flex flex-col items-center justify-center shadow-sm relative overflow-hidden">
+                            {/* Background Decoration */}
+                            <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-500 to-purple-500"></div>
+
+                            <div className="w-20 h-20 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mb-6">
+                                <FileText className="w-10 h-10" />
                             </div>
-                            <h3 className="font-semibold text-slate-800 mb-1">{file.name}</h3>
-                            <p className="text-sm text-slate-500 mb-6">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
+
+                            <h3 className="text-xl font-bold text-slate-900 mb-2">{file.name}</h3>
+                            <p className="text-slate-500 mb-8 font-mono text-sm bg-slate-100 px-3 py-1 rounded-full">
+                                {(file.size / 1024 / 1024).toFixed(2)} MB
+                            </p>
 
                             {error && (
-                                <div className="mb-6 p-3 bg-red-50 text-red-600 text-sm rounded-lg flex items-center gap-2 border border-red-200">
-                                    <AlertCircle className="w-4 h-4" /> {error}
+                                <div className="mb-8 p-4 bg-red-50 text-red-700 text-sm rounded-xl flex items-start gap-3 border border-red-100 max-w-md animate-in fade-in slide-in-from-top-2">
+                                    <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
+                                    <span>{error}</span>
                                 </div>
                             )}
 
-                            <div className="flex gap-3">
+                            <div className="flex gap-4">
                                 <Button
                                     variant="outline"
                                     onClick={handleReset}
                                     disabled={isLoading}
+                                    className="min-w-[120px] h-11 border-slate-300 hover:bg-slate-50"
                                 >
-                                    Cancel
+                                    Choose Different
                                 </Button>
                                 <Button
                                     onClick={handleUpload}
                                     loading={isLoading}
                                     disabled={isLoading}
-                                    className="bg-blue-600 hover:bg-blue-700"
+                                    className="min-w-[160px] h-11 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg shadow-blue-500/20 border-0"
                                 >
                                     {isLoading ? 'Processing...' : 'Run Evaluation'}
                                 </Button>
@@ -156,55 +222,49 @@ const BatchEval = () => {
                 </div>
             </div>
 
-            {/* Results Area */}
+            {/* Results Section */}
             {result && (
-                <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
-                    <div className="p-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
-                        <h3 className="font-semibold text-slate-700 flex items-center gap-2">
-                            <CheckCircle className="w-4 h-4 text-green-600" /> Evaluation Results
-                        </h3>
-                        <span className="text-xs text-slate-500">
-                            Processed {result.total_items} items in {result.processing_time_seconds}s
-                        </span>
-                    </div>
-                    <div className="p-6">
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                            <div className="p-4 bg-blue-50 rounded-lg border border-blue-100 text-center">
-                                <div className="text-lg font-bold text-blue-700">{result.total_items}</div>
-                                <div className="text-xs text-blue-600 uppercase mt-1">Total Items</div>
+                <div className="border-t border-slate-200 pt-8 animate-in fade-in slide-in-from-bottom-8 duration-700">
+                    <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+                        <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+                            <div>
+                                <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                                    <CheckCircle className="w-5 h-5 text-green-500" /> Evaluation Complete
+                                </h3>
+                                <p className="text-slate-500 text-sm mt-1">Successfully processed your dataset.</p>
                             </div>
-                            <div className="p-4 bg-green-50 rounded-lg border border-green-100 text-center">
-                                <div className="text-lg font-bold text-green-700">{result.successful_items}</div>
-                                <div className="text-xs text-green-600 uppercase mt-1">Successful</div>
-                            </div>
-                            <div className="p-4 bg-red-50 rounded-lg border border-red-100 text-center">
-                                <div className="text-lg font-bold text-red-700">{result.failed_items}</div>
-                                <div className="text-xs text-red-600 uppercase mt-1">Failed</div>
+                            <div className="flex items-center gap-2 text-sm text-slate-600 bg-white px-3 py-1.5 rounded-lg border border-slate-200 shadow-sm">
+                                <Loader2 className="w-4 h-4" />
+                                Time taken: <span className="font-mono font-bold text-slate-900">{result.processing_time_seconds}s</span>
                             </div>
                         </div>
 
-                        {/* Download button or details could go here */}
-                        <div className="text-center">
-                            <p className="text-slate-600 mb-4">Batch processing completed successfully.</p>
-                            {/* Feature idea: Download result CSV */}
-                            <Button disabled className="opacity-50 cursor-not-allowed">
-                                Download Report (Coming Soon)
-                            </Button>
+                        <div className="p-8">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <div className="p-6 bg-blue-50 rounded-2xl border border-blue-100 text-center hover:shadow-md transition-shadow">
+                                    <div className="text-4xl font-black text-blue-600 mb-2">{result.total_items}</div>
+                                    <div className="text-sm font-semibold text-blue-800 uppercase tracking-wide">Total Items</div>
+                                </div>
+                                <div className="p-6 bg-emerald-50 rounded-2xl border border-emerald-100 text-center hover:shadow-md transition-shadow">
+                                    <div className="text-4xl font-black text-emerald-600 mb-2">{result.successful_items}</div>
+                                    <div className="text-sm font-semibold text-emerald-800 uppercase tracking-wide">Successful</div>
+                                </div>
+                                <div className="p-6 bg-red-50 rounded-2xl border border-red-100 text-center hover:shadow-md transition-shadow">
+                                    <div className="text-4xl font-black text-red-600 mb-2">{result.failed_items}</div>
+                                    <div className="text-sm font-semibold text-red-800 uppercase tracking-wide">Failed</div>
+                                </div>
+                            </div>
+
+                            <div className="mt-8 text-center bg-slate-50 rounded-xl p-8 border border-dashed border-slate-200">
+                                <p className="text-slate-600 mb-4 font-medium">Detailed report analysis is ready.</p>
+                                <Button disabled className="bg-slate-200 text-slate-400 cursor-not-allowed">
+                                    Download Full Report (Coming Soon)
+                                </Button>
+                            </div>
                         </div>
                     </div>
                 </div>
             )}
-
-            {/* Helper Info */}
-            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-                <h4 className="text-sm font-semibold text-blue-900 mb-2">💡 Dataset Format Requirements</h4>
-                <ul className="text-xs text-blue-700 space-y-1 ml-4 list-disc">
-                    <li>Format: <strong>CSV</strong> or <strong>Excel</strong></li>
-                    <li>Column 1: <code className="bg-blue-100 px-1 rounded">text</code> (or similar) - Input document</li>
-                    <li>Column 2: <code className="bg-blue-100 px-1 rounded">reference</code> (optional) - Ground truth summary</li>
-                    <li>Encoding: UTF-8</li>
-                </ul>
-            </div>
         </div>
     );
 };
