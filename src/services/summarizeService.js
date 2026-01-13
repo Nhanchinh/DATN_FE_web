@@ -2,56 +2,44 @@ import api from './api';
 
 /**
  * Summarize Service - Gọi các API tóm tắt văn bản
+ * Đã cập nhật để sử dụng backend mới (fastandcolab)
  */
 const summarizeService = {
-    // BART-cnn (English)
-    basic: (text, options = {}) =>
-        api.post('/summarize', { text, ...options }),
+    /**
+     * Tóm tắt văn bản với model được chỉ định
+     * @param {string} text - Văn bản cần tóm tắt
+     * @param {string} model - Model: 'vit5' | 'phobert_vit5' | 'qwen'
+     * @param {number} maxLength - Độ dài tối đa (50-512)
+     */
+    summarize: (text, model = 'vit5', maxLength = 256) =>
+        api.post('/summarization/summarize', {
+            text,
+            model,
+            max_length: maxLength
+        }),
 
-    balanced: (text, options = {}) =>
-        api.post('/summarize/balanced', { text, ...options }),
+    // Health check - kiểm tra kết nối Colab GPU server
+    health: () =>
+        api.get('/summarization/health'),
 
-    detailed: (text, options = {}) =>
-        api.post('/summarize/detailed', { text, ...options }),
+    // Lấy danh sách models có sẵn
+    models: () =>
+        api.get('/summarization/models'),
 
-    // ViT5 Finetuned (Vietnamese)
-    multilingual: (text, options = {}) =>
-        api.post('/summarize/multilingual', { text, ...options }),
-
-    // PhoBERT Extractive
-    extractive: (text, options = {}) =>
-        api.post('/summarize/extractive', { text, ...options }),
-
-    chunked: (text, options = {}) =>
-        api.post('/summarize/chunked', { text, ...options }),
-
-    smart: (text, options = {}) =>
-        api.post('/summarize/smart', { text, ...options }),
-
-    // Hybrid models
-    hybrid: (text, options = {}) =>
-        api.post('/summarize/hybrid', { text, ...options }),
-
-    hybridBartpho: (text, options = {}) =>
-        api.post('/summarize/hybrid-bartpho', { text, ...options }),
-
-    hybridVit5: (text, options = {}) =>
-        api.post('/summarize/hybrid-vit5', { text, ...options }),
-
-    hybridParaphrase: (text, options = {}) =>
-        api.post('/summarize/hybrid-phobert-paraphrase', { text, ...options }),
-
-    // BARTpho
-    bartpho: (text, options = {}) =>
-        api.post('/summarize/bartpho', { text, ...options }),
-
-    paraphrase: (text, options = {}) =>
-        api.post('/summarize/bartpho/paraphrase', { text, ...options }),
-
-    // Model info
-    getMultilingualInfo: () => api.get('/summarize/multilingual/info'),
-    getExtractiveInfo: () => api.get('/summarize/extractive/info'),
-    getHybridInfo: () => api.get('/summarize/hybrid/info'),
+    // Batch upload - upload file CSV/Excel để đánh giá dataset
+    batchUpload: (file, model = 'vit5', maxLength = 256, textColumn = 'text', referenceColumn = null) => {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('model', model);
+        formData.append('max_length', maxLength);
+        formData.append('text_column', textColumn);
+        if (referenceColumn) {
+            formData.append('reference_column', referenceColumn);
+        }
+        return api.post('/summarization/batch-upload', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+        });
+    },
 };
 
 export default summarizeService;

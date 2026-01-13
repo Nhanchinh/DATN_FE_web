@@ -2,31 +2,20 @@ import api from './api';
 
 /**
  * Evaluation Service - Gọi các API đánh giá
+ * Đã cập nhật để sử dụng backend mới (fastandcolab)
  */
 const evaluationService = {
-    // Single evaluation
+    // Đánh giá một cặp prediction-reference
     single: (data) =>
-        api.post('/evaluate/single', data),
+        api.post('/evaluation/single', data),
 
-    // Batch evaluation
+    // Đánh giá batch predictions
     batch: (data) =>
-        api.post('/evaluate/batch', data),
+        api.post('/evaluation/batch', data),
 
-    // Get progress
-    progress: (evaluationId) =>
-        api.get(`/evaluate/progress/${evaluationId}`),
-
-    // Compare models
-    compare: (data) =>
-        api.post('/evaluate/compare', data),
-
-    // History
-    history: (params = {}) =>
-        api.get('/evaluate/history', { params }),
-
-    // Datasets
-    datasets: () =>
-        api.get('/evaluate/datasets'),
+    // Tóm tắt và đánh giá cùng lúc
+    summarizeAndEvaluate: (data) =>
+        api.post('/evaluation/summarize-and-evaluate', data),
 };
 
 export default evaluationService;

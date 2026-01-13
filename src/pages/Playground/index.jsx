@@ -13,86 +13,35 @@ import {
     Square
 } from 'lucide-react';
 import { Button } from '@/components/common';
-import { api } from '@/services';
+import { summarizeService } from '@/services';
 
 /**
- * Model options mapping to backend endpoints
+ * Model options - sử dụng endpoint mới /summarization/summarize với param model
+ * Backend hỗ trợ: vit5, phobert_vit5, qwen
  */
 const MODEL_OPTIONS = [
     {
-        value: 'extractive_smart',
-        label: 'PhoBERT Smart (Recommended)',
-        description: 'Trích xuất thông minh - An toàn 100%',
-        endpoint: '/summarize/smart',
+        value: 'phobert_vit5',
+        label: 'PhoBERT + ViT5 Hybrid',
+        description: 'Trích xuất thông minh + Viết lại mượt mà',
         badge: '🔥 Best'
     },
     {
-        value: 'hybrid_paraphrase',
-        label: 'Hybrid Paraphrase (PhoBERT + ViT5)',
-        description: 'Extract 4 câu + Single-pass Rewrite 🔥',
-        endpoint: '/summarize/hybrid-phobert-paraphrase',
-        badge: '⭐ Smooth'
-    },
-    {
-        value: 'hybrid',
-        label: 'Hybrid (PhoBERT + mT5)',
-        description: 'Trích xuất + Viết lại - Văn phong tự nhiên',
-        endpoint: '/summarize/hybrid',
-        badge: null
-    },
-    {
-        value: 'hybrid_vit5',
-        label: 'Hybrid (PhoBERT + ViT5)',
-        description: 'Trích xuất + ViT5 smooth từng câu',
-        endpoint: '/summarize/hybrid-vit5',
-        badge: null
-    },
-    {
-        value: 'hybrid_bartpho',
-        label: 'Hybrid (PhoBERT + BARTpho)',
-        description: 'Trích xuất + BARTpho fusion',
-        endpoint: '/summarize/hybrid-bartpho',
-        badge: null
-    },
-    {
         value: 'vit5',
-        label: 'ViT5 (Fine-tuned)',
+        label: 'ViT5 Fine-tuned',
         description: 'Google ViT5 fine-tuned cho tiếng Việt',
-        endpoint: '/summarize/multilingual',
-        badge: null
+        badge: '⭐ Fast'
     },
     {
-        value: 'bartpho',
-        label: 'BARTpho (VinAI)',
-        description: 'Seq2Seq tiếng Việt tự nhiên',
-        endpoint: '/summarize/bartpho',
-        badge: null
-    },
-    {
-        value: 'vietnews',
-        label: 'VietNews (VinAI Official)',
-        description: 'Chuyên trị tin tức, báo chí (Abstractive)',
-        endpoint: '/summarize/vietnews',
-        badge: '📰 News'
-    },
-    {
-        value: 'extractive',
-        label: 'PhoBERT Extractive',
-        description: 'Chỉ trích xuất câu - Không viết lại',
-        endpoint: '/summarize/extractive',
-        badge: null
-    },
-    {
-        value: 'extractive_chunked',
-        label: 'PhoBERT Chunked',
-        description: 'Trích xuất theo chunks - Cân bằng',
-        endpoint: '/summarize/chunked',
-        badge: null
+        value: 'qwen',
+        label: 'Qwen 2.5-7B',
+        description: 'Large Language Model với khả năng tóm tắt mạnh',
+        badge: '🚀 LLM'
     },
 ];
 
 const Playground = () => {
-    const [model, setModel] = useState('extractive_smart');
+    const [model, setModel] = useState('phobert_vit5');
     const [input, setInput] = useState('');
     const [output, setOutput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
@@ -131,26 +80,15 @@ const Playground = () => {
         }, 1000);
 
         try {
-            const selectedModel = MODEL_OPTIONS.find(m => m.value === model);
-
-            const response = await api.post(
-                selectedModel.endpoint,
-                { text: input },
-                { signal: abortControllerRef.current.signal }
-            );
+            // Gọi API với endpoint mới
+            const response = await summarizeService.summarize(input, model, 256);
 
             clearInterval(timerRef.current);
             const endTime = Date.now();
             const timeSeconds = ((endTime - startTime) / 1000).toFixed(1);
 
-            // Handle different response formats from various endpoints
-            const summaryText = response.summary ||
-                response.final_summary ||
-                response.stage2_final ||  // hybrid-phobert-paraphrase
-                response.stage2_rewritten ||  // hybrid endpoints
-                response.rewritten_text ||
-                response.text ||
-                (typeof response === 'string' ? response : '');
+            // Response format từ backend mới
+            const summaryText = response.summary || '';
 
             setOutput(summaryText);
 
@@ -163,7 +101,9 @@ const Playground = () => {
                 compression: parseFloat(compressionRatio),
                 inputWords,
                 outputWords,
-                time: `${timeSeconds}s`
+                time: `${timeSeconds}s`,
+                modelUsed: response.model_used || model,
+                inferenceTime: response.colab_inference_ms ? `${response.colab_inference_ms}ms` : null
             });
         } catch (err) {
             clearInterval(timerRef.current);
@@ -361,6 +301,7 @@ const Playground = () => {
                         {output && (
                             <div className="p-2 bg-slate-50 border-t border-slate-200 text-xs text-slate-500">
                                 {metrics?.outputWords} từ • Giảm {metrics?.compression}%
+                                {metrics?.inferenceTime && ` • GPU: ${metrics.inferenceTime}`}
                             </div>
                         )}
                     </div>
