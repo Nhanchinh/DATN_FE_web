@@ -2,6 +2,7 @@ export { default as Home } from './Home';
 export { default as Login } from './Login';
 export { default as Register } from './Register';
 export { default as Playground } from './Playground';
+export { default as CompareModels } from './CompareModels';
 export { default as BatchEval } from './BatchEval';
 export { default as SingleEval } from './SingleEval';
 export { default as Analytics } from './Analytics';

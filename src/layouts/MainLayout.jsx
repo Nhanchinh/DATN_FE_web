@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Terminal, Database, ChevronRight, Menu, LogOut, User, Settings, ChevronUp, History, FileCheck } from 'lucide-react';
+import { LayoutDashboard, Terminal, Database, ChevronRight, Menu, LogOut, User, Settings, ChevronUp, History, FileCheck, GitCompare } from 'lucide-react';
 import { useAuth } from '@/hooks';
 
 /**
@@ -16,6 +16,7 @@ const MainLayout = () => {
     const navItems = [
         { path: '/analytics', label: 'Overview', icon: LayoutDashboard },
         { path: '/playground', label: 'Playground', icon: Terminal },
+        { path: '/compare', label: 'Compare', icon: GitCompare },
         { path: '/single-eval', label: 'Single Eval', icon: FileCheck },
         { path: '/batch-eval', label: 'Batch Eval', icon: Database },
         { path: '/history', label: 'History', icon: History },
