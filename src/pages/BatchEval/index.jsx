@@ -1,16 +1,15 @@
-
-import { useState, useRef } from 'react';
-import { UploadCloud, FileText, Database, Settings2, Loader2, AlertCircle, CheckCircle, Download, FileSpreadsheet } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { Upload, FileText, CheckCircle, AlertCircle, Loader2, Download, Database, FileSpreadsheet, Settings2 } from 'lucide-react';
 import { Button } from '@/components/common';
-import { summarizeService } from '@/services';
+import evaluationService from '@/services/evaluationService';
 
 const BatchEval = () => {
     const fileInputRef = useRef(null);
     const [file, setFile] = useState(null);
-    const [model, setModel] = useState('vit5');
     const [isLoading, setIsLoading] = useState(false);
     const [result, setResult] = useState(null);
     const [error, setError] = useState('');
+    const [calculateBert, setCalculateBert] = useState(false);
 
     const handleFileChange = (e) => {
         const selectedFile = e.target.files[0];
@@ -35,12 +34,12 @@ const BatchEval = () => {
     };
 
     const handleDownloadTemplate = () => {
-        const csvContent = "\uFEFFtext,reference\n\"Trí tuệ nhân tạo đang thay đổi thế giới...\",\"AI đang đổi mới...\"\n\"Deep learning là một phần của AI...\",\"Deep learning là tập con của AI...\"";
+        const csvContent = "\uFEFFsummary,reference\n\"Tóm tắt máy tạo...\",\"Tóm tắt mẫu...\"\n\"Nội dung tóm tắt 2...\",\"Nội dung mẫu 2...\"";
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        link.setAttribute('download', 'sample_dataset.csv');
+        link.setAttribute('download', 'score_eval_template.csv');
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -54,7 +53,8 @@ const BatchEval = () => {
         setResult(null);
 
         try {
-            const response = await summarizeService.batchUpload(file, model);
+            // Call Score-Only Evaluation Endpoint (Local, Fast)
+            const response = await evaluationService.evaluateFileUpload(file, calculateBert);
             setResult(response);
         } catch (err) {
             console.error('Batch upload error:', err);
@@ -74,16 +74,20 @@ const BatchEval = () => {
     };
 
     return (
-        <div className="max-w-5xl mx-auto space-y-8 pb-10">
+        <div className="max-w-5xl mx-auto space-y-8 pb-10 px-6">
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-slate-200 pb-6">
                 <div>
-                    <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Dataset Evaluation</h1>
-                    <p className="text-slate-500 mt-2 text-lg">Run batch summarization on large datasets to benchmark performance.</p>
+                    <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Batch Evaluation (Score Only)</h1>
+                    <p className="text-slate-500 mt-2 text-lg">
+                        Upload file chứa cặp <strong>summary - reference</strong> để chấm điểm ROUGE/BLEU.
+                        <br />
+                        Chạy offline, không cần kết nối Colab GPU.
+                    </p>
                 </div>
                 <Button
                     variant="outline"
-                    className="gap-2 bg-white border-slate-300 text-slate-700 hover:bg-blue-600 hover:text-white hover:border-blue-600 shadow-sm transition-all"
+                    className="gap-2 bg-white border-slate-300 text-slate-700 hover:bg-indigo-600 hover:text-white hover:border-indigo-600 shadow-sm transition-all"
                     onClick={handleDownloadTemplate}
                 >
                     <Download className="w-4 h-4" />
@@ -97,51 +101,43 @@ const BatchEval = () => {
                     {/* Config Card */}
                     <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
                         <h3 className="font-semibold text-slate-900 flex items-center gap-2 mb-6 text-lg">
-                            <Settings2 className="w-5 h-5 text-slate-500" /> Configuration
+                            <Settings2 className="w-5 h-5 text-slate-500" /> Cấu hình
                         </h3>
 
                         <div className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-2">Select Model</label>
-                                <div className="relative">
-                                    <select
-                                        value={model}
-                                        onChange={(e) => setModel(e.target.value)}
-                                        disabled={isLoading}
-                                        className="w-full appearance-none bg-slate-50 border border-slate-200 text-slate-900 text-sm rounded-xl focus:ring-blue-500 focus:border-blue-500 p-3 pr-8"
-                                    >
-                                        <option value="phobert_vit5">PhoBERT + ViT5 Hybrid (Best)</option>
-                                        <option value="vit5">ViT5 Fine-tuned (Fast)</option>
-                                        <option value="qwen">Qwen 2.5-7B (LLM)</option>
-                                    </select>
-                                    <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
-                                        <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
-                                    </div>
-                                </div>
-                                <p className="text-xs text-slate-500 mt-2">
-                                    Choose the underlying model for summarization tasks.
-                                </p>
+                            <div className="flex items-center space-x-3 p-3 bg-slate-50 rounded-xl border border-slate-100">
+                                <input
+                                    type="checkbox"
+                                    id="bert-score"
+                                    checked={calculateBert}
+                                    onChange={(e) => setCalculateBert(e.target.checked)}
+                                    className="w-5 h-5 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500"
+                                />
+                                <label htmlFor="bert-score" className="text-sm font-medium text-slate-700 cursor-pointer select-none">
+                                    Tính BERTScore
+                                    <span className="block text-xs text-slate-500 font-normal mt-0.5">Sẽ chậm hơn đáng kể</span>
+                                </label>
                             </div>
                         </div>
                     </div>
 
                     {/* Guidelines Card */}
-                    <div className="bg-blue-50/50 border border-blue-100 rounded-2xl p-6">
-                        <h4 className="font-semibold text-blue-900 mb-3 flex items-center gap-2">
-                            <FileSpreadsheet className="w-4 h-4" /> Data Format
+                    <div className="bg-indigo-50/50 border border-indigo-100 rounded-2xl p-6">
+                        <h4 className="font-semibold text-indigo-900 mb-3 flex items-center gap-2">
+                            <FileSpreadsheet className="w-4 h-4" /> Định dạng File
                         </h4>
-                        <ul className="text-sm text-blue-800 space-y-3">
+                        <ul className="text-sm text-indigo-800 space-y-3">
                             <li className="flex items-start gap-2">
-                                <span className="bg-blue-100 text-blue-600 rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">1</span>
+                                <span className="bg-indigo-100 text-indigo-600 rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">1</span>
                                 <span>File extension: <strong>.csv</strong> or <strong>.xlsx</strong></span>
                             </li>
                             <li className="flex items-start gap-2">
-                                <span className="bg-blue-100 text-blue-600 rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">2</span>
-                                <div>Column 1 header: <code className="bg-white border border-blue-200 px-1 py-0.5 rounded text-xs font-mono">text</code> <span className="text-xs opacity-75">(required)</span></div>
+                                <span className="bg-indigo-100 text-indigo-600 rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">2</span>
+                                <div>Cột tóm tắt máy: <code className="bg-white border border-indigo-200 px-1 py-0.5 rounded text-xs font-mono">summary</code></div>
                             </li>
                             <li className="flex items-start gap-2">
-                                <span className="bg-blue-100 text-blue-600 rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">3</span>
-                                <div>Column 2 header: <code className="bg-white border border-blue-200 px-1 py-0.5 rounded text-xs font-mono">reference</code> <span className="text-xs opacity-75">(optional)</span></div>
+                                <span className="bg-indigo-100 text-indigo-600 rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">3</span>
+                                <div>Cột tóm tắt mẫu: <code className="bg-white border border-indigo-200 px-1 py-0.5 rounded text-xs font-mono">reference</code></div>
                             </li>
                         </ul>
                     </div>
@@ -152,7 +148,7 @@ const BatchEval = () => {
                     {!file ? (
                         <div
                             onClick={() => fileInputRef.current?.click()}
-                            className="h-full min-h-[400px] border-2 border-dashed border-slate-300 rounded-2xl bg-slate-50/50 hover:bg-blue-50/30 hover:border-blue-400 transition-all cursor-pointer group flex flex-col items-center justify-center relative overflow-hidden"
+                            className="h-full min-h-[400px] border-2 border-dashed border-slate-300 rounded-2xl bg-slate-50/50 hover:bg-indigo-50/30 hover:border-indigo-400 transition-all cursor-pointer group flex flex-col items-center justify-center relative overflow-hidden"
                         >
                             <input
                                 type="file"
@@ -163,11 +159,11 @@ const BatchEval = () => {
                             />
 
                             <div className="relative z-10 text-center p-8">
-                                <div className="w-20 h-20 bg-white text-blue-600 rounded-full shadow-sm flex items-center justify-center mx-auto mb-6 group-hover:scale-110 group-hover:text-blue-700 transition-all duration-300">
-                                    <UploadCloud className="w-10 h-10" />
+                                <div className="w-20 h-20 bg-white text-indigo-600 rounded-full shadow-sm flex items-center justify-center mx-auto mb-6 group-hover:scale-110 group-hover:text-indigo-700 transition-all duration-300">
+                                    <Upload className="w-10 h-10" />
                                 </div>
-                                <h3 className="text-xl font-bold text-slate-800 mb-3 group-hover:text-blue-700 transition-colors">Drag & Drop or Click to Upload</h3>
-                                <p className="text-slate-500 mb-6 max-w-sm mx-auto">Upload your dataset to start the automatic evaluation process.</p>
+                                <h3 className="text-xl font-bold text-slate-800 mb-3 group-hover:text-indigo-700 transition-colors">Drag & Drop or Click to Upload</h3>
+                                <p className="text-slate-500 mb-6 max-w-sm mx-auto">Upload dataset để chấm điểm tự động.</p>
                                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-200/50 text-xs font-medium text-slate-600">
                                     <FileText className="w-3 h-3" /> Max file size: 10MB
                                 </div>
@@ -181,9 +177,9 @@ const BatchEval = () => {
                     ) : (
                         <div className="bg-white border border-slate-200 rounded-2xl p-8 h-full flex flex-col items-center justify-center shadow-sm relative overflow-hidden">
                             {/* Background Decoration */}
-                            <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-500 to-purple-500"></div>
+                            <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-indigo-500 to-purple-500"></div>
 
-                            <div className="w-20 h-20 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mb-6">
+                            <div className="w-20 h-20 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center mb-6">
                                 <FileText className="w-10 h-10" />
                             </div>
 
@@ -204,17 +200,21 @@ const BatchEval = () => {
                                     variant="outline"
                                     onClick={handleReset}
                                     disabled={isLoading}
-                                    className="min-w-[120px] h-11 border-slate-300 hover:bg-slate-50"
+                                    className="min-w-[120px] h-11 border-slate-300 hover:bg-slate-50 text-slate-700"
                                 >
-                                    Choose Different
+                                    Chọn lại
                                 </Button>
                                 <Button
                                     onClick={handleUpload}
-                                    loading={isLoading}
                                     disabled={isLoading}
-                                    className="min-w-[160px] h-11 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg shadow-blue-500/20 border-0"
+                                    className="min-w-[160px] h-11 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white shadow-lg shadow-indigo-500/20 border-0"
                                 >
-                                    {isLoading ? 'Processing...' : 'Run Evaluation'}
+                                    {isLoading ? (
+                                        <>
+                                            <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                                            Đang chấm điểm...
+                                        </>
+                                    ) : 'Chạy Đánh Giá'}
                                 </Button>
                             </div>
                         </div>
@@ -229,37 +229,74 @@ const BatchEval = () => {
                         <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row justify-between sm:items-center gap-4">
                             <div>
                                 <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                                    <CheckCircle className="w-5 h-5 text-green-500" /> Evaluation Complete
+                                    <CheckCircle className="w-5 h-5 text-green-500" /> Đánh giá hoàn tất
                                 </h3>
-                                <p className="text-slate-500 text-sm mt-1">Successfully processed your dataset.</p>
+                                <p className="text-slate-500 text-sm mt-1">Kết quả trung bình trên toàn bộ dataset.</p>
                             </div>
                             <div className="flex items-center gap-2 text-sm text-slate-600 bg-white px-3 py-1.5 rounded-lg border border-slate-200 shadow-sm">
                                 <Loader2 className="w-4 h-4" />
-                                Time taken: <span className="font-mono font-bold text-slate-900">{result.processing_time_seconds}s</span>
+                                Thời gian: <span className="font-mono font-bold text-slate-900">{result.total_time_s}s</span>
                             </div>
                         </div>
 
                         <div className="p-8">
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                <div className="p-6 bg-blue-50 rounded-2xl border border-blue-100 text-center hover:shadow-md transition-shadow">
-                                    <div className="text-4xl font-black text-blue-600 mb-2">{result.total_items}</div>
-                                    <div className="text-sm font-semibold text-blue-800 uppercase tracking-wide">Total Items</div>
+                            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                                <div className="p-5 bg-slate-50 rounded-2xl border border-slate-200 text-center">
+                                    <div className="text-2xl font-black text-slate-700 mb-2">{result.total_items}</div>
+                                    <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">Mẫu</div>
                                 </div>
-                                <div className="p-6 bg-emerald-50 rounded-2xl border border-emerald-100 text-center hover:shadow-md transition-shadow">
-                                    <div className="text-4xl font-black text-emerald-600 mb-2">{result.successful_items}</div>
-                                    <div className="text-sm font-semibold text-emerald-800 uppercase tracking-wide">Successful</div>
+                                <div className="p-5 bg-red-50 rounded-2xl border border-red-100 text-center">
+                                    <div className="text-2xl font-black text-red-600 mb-2">{(result.results.reduce((acc, item) => acc + (item.rouge1 || 0), 0) / result.total_items * 100).toFixed(2)}</div>
+                                    <div className="text-xs font-bold text-red-800 uppercase tracking-wider">ROUGE-1</div>
                                 </div>
-                                <div className="p-6 bg-red-50 rounded-2xl border border-red-100 text-center hover:shadow-md transition-shadow">
-                                    <div className="text-4xl font-black text-red-600 mb-2">{result.failed_items}</div>
-                                    <div className="text-sm font-semibold text-red-800 uppercase tracking-wide">Failed</div>
+                                <div className="p-5 bg-blue-50 rounded-2xl border border-blue-100 text-center">
+                                    <div className="text-2xl font-black text-blue-600 mb-2">{(result.results.reduce((acc, item) => acc + (item.rougeL || 0), 0) / result.total_items * 100).toFixed(2)}</div>
+                                    <div className="text-xs font-bold text-blue-800 uppercase tracking-wider">ROUGE-L</div>
                                 </div>
+                                <div className="p-5 bg-purple-50 rounded-2xl border border-purple-100 text-center">
+                                    <div className="text-2xl font-black text-purple-600 mb-2">{(result.results.reduce((acc, item) => acc + (item.bleu || 0), 0) / result.total_items * 100).toFixed(2)}</div>
+                                    <div className="text-xs font-bold text-purple-800 uppercase tracking-wider">BLEU</div>
+                                </div>
+                                {/* BERTScore Card - chỉ hiển thị nếu có tính */}
+                                {calculateBert && (
+                                    <div className="p-5 bg-emerald-50 rounded-2xl border border-emerald-100 text-center">
+                                        <div className="text-2xl font-black text-emerald-600 mb-2">{(result.results.reduce((acc, item) => acc + (item.bert_score || 0), 0) / result.total_items * 100).toFixed(2)}</div>
+                                        <div className="text-xs font-bold text-emerald-800 uppercase tracking-wider">BERTScore</div>
+                                    </div>
+                                )}
                             </div>
 
-                            <div className="mt-8 text-center bg-slate-50 rounded-xl p-8 border border-dashed border-slate-200">
-                                <p className="text-slate-600 mb-4 font-medium">Detailed report analysis is ready.</p>
-                                <Button disabled className="bg-slate-200 text-slate-400 cursor-not-allowed">
-                                    Download Full Report (Coming Soon)
-                                </Button>
+                            {/* Detailed List Preview */}
+                            <div className="mt-8 border rounded-xl overflow-hidden overflow-x-auto">
+                                <table className="w-full text-sm text-left">
+                                    <thead className="bg-slate-50 text-slate-700 font-semibold border-b">
+                                        <tr>
+                                            <th className="p-4 w-12">#</th>
+                                            <th className="p-4">Summary</th>
+                                            <th className="p-4 w-20">R-1</th>
+                                            <th className="p-4 w-20">R-L</th>
+                                            <th className="p-4 w-20">BLEU</th>
+                                            {calculateBert && <th className="p-4 w-20">BERT</th>}
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y">
+                                        {result.results.slice(0, 5).map((item, idx) => (
+                                            <tr key={idx} className="hover:bg-slate-50">
+                                                <td className="p-4 font-mono text-slate-500">{idx + 1}</td>
+                                                <td className="p-4 max-w-md truncate" title={item.summary}>{item.summary}</td>
+                                                <td className="p-4 font-bold text-red-600">{(item.rouge1 * 100).toFixed(1)}</td>
+                                                <td className="p-4 font-bold text-blue-600">{(item.rougeL * 100).toFixed(1)}</td>
+                                                <td className="p-4 font-bold text-purple-600">{(item.bleu * 100).toFixed(1)}</td>
+                                                {calculateBert && <td className="p-4 font-bold text-emerald-600">{(item.bert_score * 100).toFixed(1)}</td>}
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                                {result.results.length > 5 && (
+                                    <div className="p-3 text-center bg-slate-50 text-slate-500 text-xs border-t">
+                                        ... và {result.results.length - 5} dòng khác
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>

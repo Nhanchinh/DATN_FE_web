@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { MainLayout, AuthLayout } from '@/layouts';
-import { Home, Login, Register, Dashboard, Summarize, Playground, BatchEval, Analytics, History } from '@/pages';
+import { Home, Login, Register, Dashboard, Summarize, Playground, BatchEval, SingleEval, Analytics, History } from '@/pages';
 import { ProtectedRoute } from '@/components/common';
 
 /**
@@ -22,6 +22,7 @@ const AppRouter = () => {
                 }>
                     <Route path="/" element={<Home />} />
                     <Route path="/playground" element={<Playground />} />
+                    <Route path="/single-eval" element={<SingleEval />} />
                     <Route path="/batch-eval" element={<BatchEval />} />
                     <Route path="/analytics" element={<Analytics />} />
                     <Route path="/history" element={<History />} />
