@@ -13,7 +13,7 @@ import {
     Square
 } from 'lucide-react';
 import { Button } from '@/components/common';
-import { summarizeService } from '@/services';
+import { summarizeService, historyService } from '@/services';
 
 /**
  * Model options - sử dụng endpoint mới /summarization/summarize với param model
@@ -105,6 +105,23 @@ const Playground = () => {
                 modelUsed: response.model_used || model,
                 inferenceTime: response.colab_inference_ms ? `${response.colab_inference_ms}ms` : null
             });
+
+            // Auto-save to history
+            try {
+                await historyService.create({
+                    input_text: input,
+                    summary: summaryText,
+                    model_used: response.model_used || model,
+                    input_words: inputWords,
+                    output_words: outputWords,
+                    compression_ratio: parseFloat(compressionRatio),
+                    processing_time_ms: Math.round((endTime - startTime)),
+                    colab_inference_ms: response.colab_inference_ms || null
+                });
+            } catch (historyErr) {
+                console.warn('Failed to save history:', historyErr);
+                // Don't block main flow if history save fails
+            }
         } catch (err) {
             clearInterval(timerRef.current);
 

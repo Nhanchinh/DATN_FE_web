@@ -6,3 +6,4 @@ export { default as api } from './api';
 export { default as authService } from './authService';
 export { default as summarizeService } from './summarizeService';
 export { default as evaluationService } from './evaluationService';
+export { default as historyService } from './historyService';

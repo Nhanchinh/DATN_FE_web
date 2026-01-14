@@ -6,3 +6,4 @@ export { default as Summarize } from './Summarize';
 export { default as Playground } from './Playground';
 export { default as BatchEval } from './BatchEval';
 export { default as Analytics } from './Analytics';
+export { default as History } from './History';
