@@ -15,9 +15,10 @@ import {
     Edit3,
     Save,
     AlertCircle,
-    Trash2
+    Trash2,
+    Star
 } from 'lucide-react';
-import { Button } from '@/components/common';
+import { Button, HumanEvalModal } from '@/components/common';
 import { historyService } from '@/services';
 
 /**
@@ -55,10 +56,15 @@ const History = () => {
 
     // Export state
     const [exporting, setExporting] = useState(false);
+    const [exportingHumanEval, setExportingHumanEval] = useState(false);
 
     // Delete state
     const [selectedIds, setSelectedIds] = useState([]);
     const [deleting, setDeleting] = useState(false);
+
+    // Human Evaluation Modal
+    const [showHumanEvalModal, setShowHumanEvalModal] = useState(false);
+    const [humanEvalItem, setHumanEvalItem] = useState(null);
 
     // Fetch history list
     const fetchHistory = useCallback(async () => {
@@ -143,6 +149,27 @@ const History = () => {
         }
     };
 
+    // Open Human Eval Modal
+    const openHumanEval = (item) => {
+        setHumanEvalItem(item);
+        setShowHumanEvalModal(true);
+    };
+
+    // Submit Human Evaluation
+    const handleHumanEvalSubmit = async (feedbackData) => {
+        if (!humanEvalItem) return;
+
+        try {
+            await historyService.addFeedback(humanEvalItem.id, feedbackData);
+            fetchHistory();
+            setShowHumanEvalModal(false);
+            setHumanEvalItem(null);
+        } catch (err) {
+            console.error('Save human eval error:', err);
+            alert('Lỗi lưu đánh giá: ' + (err.response?.data?.detail || err.message));
+        }
+    };
+
     // Export bad summaries as CSV (respects current filter)
     const exportBadSummaries = async () => {
         setExporting(true);
@@ -194,6 +221,63 @@ const History = () => {
             alert('Lỗi export: ' + (err.response?.data?.detail || err.message));
         } finally {
             setExporting(false);
+        }
+    };
+
+    // Export Human Evaluation data as CSV
+    const exportHumanEval = async () => {
+        setExportingHumanEval(true);
+        try {
+            const params = { limit: 500 };
+            if (filters.model) params.model = filters.model;
+
+            const response = await historyService.exportHumanEval(params);
+
+            if (response.items.length === 0) {
+                alert('Chưa có bản tóm tắt nào có Human Evaluation. Hãy đánh giá một số bản tóm tắt bằng ⭐ trước khi export.');
+                setExportingHumanEval(false);
+                return;
+            }
+
+            // Convert to CSV
+            const headers = ['Summary', 'Model', 'Date', 'Fluency', 'Coherence', 'Relevance', 'Consistency', 'Average Score', 'Overall Rating', 'Comment'];
+            const csvRows = [headers.join(',')];
+
+            response.items.forEach(item => {
+                const row = [
+                    `"${(item.summary || '').replace(/"/g, '""')}"`,
+                    `"${item.model_used || ''}"`,
+                    `"${item.created_at || ''}"`,
+                    item.fluency || '',
+                    item.coherence || '',
+                    item.relevance || '',
+                    item.consistency || '',
+                    item.average_score || '',
+                    `"${item.overall_rating || ''}"`,
+                    `"${(item.comment || '').replace(/"/g, '""')}"`
+                ];
+                csvRows.push(row.join(','));
+            });
+
+            // Add BOM for Excel UTF-8 compatibility
+            const BOM = '\uFEFF';
+            const csvContent = BOM + csvRows.join('\n');
+
+            // Download as CSV
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `human_eval_${new Date().toISOString().split('T')[0]}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        } catch (err) {
+            console.error('Export human eval error:', err);
+            alert('Lỗi export: ' + (err.response?.data?.detail || err.message));
+        } finally {
+            setExportingHumanEval(false);
         }
     };
 
@@ -317,6 +401,15 @@ const History = () => {
                     >
                         {exporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
                         Export Bad
+                    </Button>
+                    <Button
+                        size="sm"
+                        className="bg-amber-500 hover:bg-amber-600 text-white gap-2"
+                        onClick={exportHumanEval}
+                        disabled={exportingHumanEval}
+                    >
+                        {exportingHumanEval ? <Loader2 className="w-4 h-4 animate-spin" /> : <Star className="w-4 h-4" />}
+                        Export Human Eval
                     </Button>
                     {selectedIds.length > 0 && (
                         <Button
@@ -476,6 +569,13 @@ const History = () => {
                                                     title="Tệ"
                                                 >
                                                     <ThumbsDown className="w-4 h-4" />
+                                                </button>
+                                                <button
+                                                    onClick={() => openHumanEval(item)}
+                                                    className={`p-1.5 rounded hover:bg-amber-100 ${item.feedback?.human_eval ? 'bg-amber-100 text-amber-600' : 'text-slate-400 hover:text-amber-600'}`}
+                                                    title="Human Evaluation"
+                                                >
+                                                    <Star className="w-4 h-4" />
                                                 </button>
                                                 <button
                                                     onClick={() => openDetail(item)}
@@ -687,6 +787,42 @@ const History = () => {
                                 </div>
                             </div>
 
+                            {/* Human Evaluation Scores */}
+                            {selectedItem.feedback?.human_eval && (
+                                <div className="bg-gradient-to-r from-amber-50 to-orange-50 p-4 rounded-xl border border-amber-200">
+                                    <h3 className="text-sm font-semibold text-amber-900 mb-3 flex items-center gap-2">
+                                        <Star className="w-4 h-4" />
+                                        Human Evaluation Scores
+                                    </h3>
+                                    <div className="grid grid-cols-4 gap-3">
+                                        {selectedItem.feedback.human_eval.fluency && (
+                                            <div className="bg-white p-3 rounded-lg text-center">
+                                                <div className="text-xl font-bold text-amber-600">{selectedItem.feedback.human_eval.fluency}/5</div>
+                                                <div className="text-xs text-slate-600">✍️ Fluency</div>
+                                            </div>
+                                        )}
+                                        {selectedItem.feedback.human_eval.coherence && (
+                                            <div className="bg-white p-3 rounded-lg text-center">
+                                                <div className="text-xl font-bold text-amber-600">{selectedItem.feedback.human_eval.coherence}/5</div>
+                                                <div className="text-xs text-slate-600">🔗 Coherence</div>
+                                            </div>
+                                        )}
+                                        {selectedItem.feedback.human_eval.relevance && (
+                                            <div className="bg-white p-3 rounded-lg text-center">
+                                                <div className="text-xl font-bold text-amber-600">{selectedItem.feedback.human_eval.relevance}/5</div>
+                                                <div className="text-xs text-slate-600">🎯 Relevance</div>
+                                            </div>
+                                        )}
+                                        {selectedItem.feedback.human_eval.consistency && (
+                                            <div className="bg-white p-3 rounded-lg text-center">
+                                                <div className="text-xl font-bold text-amber-600">{selectedItem.feedback.human_eval.consistency}/5</div>
+                                                <div className="text-xs text-slate-600">✅ Consistency</div>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+
                             {/* Feedback form */}
                             <div className="border-t border-slate-200 pt-6">
                                 <h3 className="text-sm font-semibold text-slate-500 mb-4 flex items-center gap-2">
@@ -759,6 +895,17 @@ const History = () => {
                     </div>
                 </div>
             )}
+
+            {/* Human Evaluation Modal */}
+            <HumanEvalModal
+                isOpen={showHumanEvalModal}
+                onClose={() => {
+                    setShowHumanEvalModal(false);
+                    setHumanEvalItem(null);
+                }}
+                onSubmit={handleHumanEvalSubmit}
+                historyItem={humanEvalItem}
+            />
         </div>
     );
 };

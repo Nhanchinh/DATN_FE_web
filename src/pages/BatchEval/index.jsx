@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Upload, FileText, CheckCircle, AlertCircle, Loader2, Download, Database, FileSpreadsheet, Settings2 } from 'lucide-react';
+import { Upload, FileText, CheckCircle, AlertCircle, Loader2, Download, Database, FileSpreadsheet, Settings2, FileDown } from 'lucide-react';
 import { Button } from '@/components/common';
 import evaluationService from '@/services/evaluationService';
 
@@ -10,6 +10,58 @@ const BatchEval = () => {
     const [result, setResult] = useState(null);
     const [error, setError] = useState('');
     const [calculateBert, setCalculateBert] = useState(false);
+
+    // Export results to CSV
+    const handleExportCSV = () => {
+        if (!result || !result.results) return;
+
+        // Build CSV headers
+        const headers = ['#', 'Summary', 'Reference', 'ROUGE-1', 'ROUGE-2', 'ROUGE-L', 'BLEU'];
+        if (calculateBert) headers.push('BERTScore');
+
+        // Build CSV rows
+        const rows = result.results.map((item, idx) => {
+            const row = [
+                idx + 1,
+                `"${(item.summary || '').replace(/"/g, '""')}"`,
+                `"${(item.reference_summary || '').replace(/"/g, '""')}"`,
+                (item.rouge1 * 100).toFixed(2),
+                (item.rouge2 * 100).toFixed(2),
+                (item.rougeL * 100).toFixed(2),
+                (item.bleu * 100).toFixed(2)
+            ];
+            if (calculateBert) row.push((item.bert_score * 100).toFixed(2));
+            return row.join(',');
+        });
+
+        // Add average row
+        const avgRouge1 = (result.results.reduce((acc, item) => acc + (item.rouge1 || 0), 0) / result.total_items * 100).toFixed(2);
+        const avgRouge2 = (result.results.reduce((acc, item) => acc + (item.rouge2 || 0), 0) / result.total_items * 100).toFixed(2);
+        const avgRougeL = (result.results.reduce((acc, item) => acc + (item.rougeL || 0), 0) / result.total_items * 100).toFixed(2);
+        const avgBleu = (result.results.reduce((acc, item) => acc + (item.bleu || 0), 0) / result.total_items * 100).toFixed(2);
+        
+        const avgRow = ['AVG', '""', '""', avgRouge1, avgRouge2, avgRougeL, avgBleu];
+        if (calculateBert) {
+            const avgBert = (result.results.reduce((acc, item) => acc + (item.bert_score || 0), 0) / result.total_items * 100).toFixed(2);
+            avgRow.push(avgBert);
+        }
+        rows.push(avgRow.join(','));
+
+        // Create CSV content with BOM for Excel
+        const BOM = '\uFEFF';
+        const csvContent = BOM + headers.join(',') + '\n' + rows.join('\n');
+
+        // Download
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `evaluation_results_${new Date().toISOString().split('T')[0]}.csv`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    };
 
     const handleFileChange = (e) => {
         const selectedFile = e.target.files[0];
@@ -233,9 +285,19 @@ const BatchEval = () => {
                                 </h3>
                                 <p className="text-slate-500 text-sm mt-1">Kết quả trung bình trên toàn bộ dataset.</p>
                             </div>
-                            <div className="flex items-center gap-2 text-sm text-slate-600 bg-white px-3 py-1.5 rounded-lg border border-slate-200 shadow-sm">
-                                <Loader2 className="w-4 h-4" />
-                                Thời gian: <span className="font-mono font-bold text-slate-900">{result.total_time_s}s</span>
+                            <div className="flex items-center gap-3">
+                                <div className="flex items-center gap-2 text-sm text-slate-600 bg-white px-3 py-1.5 rounded-lg border border-slate-200 shadow-sm">
+                                    <Loader2 className="w-4 h-4" />
+                                    Thời gian: <span className="font-mono font-bold text-slate-900">{result.total_time_s}s</span>
+                                </div>
+                                <Button
+                                    size="sm"
+                                    className="bg-emerald-600 hover:bg-emerald-700 text-white gap-2"
+                                    onClick={handleExportCSV}
+                                >
+                                    <FileDown className="w-4 h-4" />
+                                    Export CSV
+                                </Button>
                             </div>
                         </div>
 

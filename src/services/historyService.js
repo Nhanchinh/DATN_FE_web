@@ -66,6 +66,20 @@ const historyService = {
      */
     deleteAll: () =>
         api.delete('/history/all', { params: { confirm: true } }),
+
+    /**
+     * Lấy thống kê analytics cho dashboard
+     * @returns {Promise} - { total_summaries, total_with_feedback, feedback_rate, rating_distribution, model_distribution, model_stats, daily_counts, avg_compression_ratio, avg_processing_time_ms }
+     */
+    getAnalytics: () =>
+        api.get('/history/analytics'),
+
+    /**
+     * Export human evaluation data
+     * @param {Object} params - { model?, limit? }
+     */
+    exportHumanEval: (params = {}) =>
+        api.get('/history/export/human-eval', { params }),
 };
 
 export default historyService;
