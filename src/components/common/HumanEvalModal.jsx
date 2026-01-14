@@ -27,16 +27,17 @@ const HumanEvalModal = ({ isOpen, onClose, onSubmit, historyItem }) => {
         };
 
         // Tính average score để auto-set rating
+        let finalRating = rating; // Sử dụng rating hiện tại
         const validScores = Object.values(scores).filter(s => s !== null);
         if (validScores.length > 0) {
             const avgScore = validScores.reduce((a, b) => a + b, 0) / validScores.length;
-            if (avgScore >= 4) rating = 'good';
-            else if (avgScore <= 2) rating = 'bad';
-            else rating = 'neutral';
+            if (avgScore >= 4) finalRating = 'good';
+            else if (avgScore <= 2) finalRating = 'bad';
+            else finalRating = 'neutral';
         }
 
         onSubmit({
-            rating,
+            rating: finalRating,
             comment,
             human_eval: humanEval
         });
