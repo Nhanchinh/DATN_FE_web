@@ -19,10 +19,10 @@ const Home = () => {
                     ROUGE, BLEU. Hỗ trợ văn bản tiếng Việt.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16">
-                    <Link to="/summarize">
+                    <Link to="/playground">
                         <Button size="lg" className="shadow-lg shadow-blue-500/30">⚡ Bắt đầu ngay</Button>
                     </Link>
-                    <Link to="/dashboard">
+                    <Link to="/analytics">
                         <Button variant="outline" size="lg">📊 Xem thống kê</Button>
                     </Link>
                 </div>

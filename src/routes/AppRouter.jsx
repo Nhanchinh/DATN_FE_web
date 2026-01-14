@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { MainLayout, AuthLayout } from '@/layouts';
-import { Home, Login, Register, Dashboard, Summarize, Playground, BatchEval, SingleEval, Analytics, History } from '@/pages';
+import { Home, Login, Register, Playground, BatchEval, SingleEval, Analytics, History } from '@/pages';
 import { ProtectedRoute } from '@/components/common';
 
 /**
@@ -26,10 +26,6 @@ const AppRouter = () => {
                     <Route path="/batch-eval" element={<BatchEval />} />
                     <Route path="/analytics" element={<Analytics />} />
                     <Route path="/history" element={<History />} />
-
-                    {/* Legacy routes */}
-                    <Route path="/summarize" element={<Summarize />} />
-                    <Route path="/dashboard" element={<Dashboard />} />
                 </Route>
 
                 {/* Public routes - không cần đăng nhập */}
