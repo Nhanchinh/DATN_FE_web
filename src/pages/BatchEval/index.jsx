@@ -39,7 +39,7 @@ const BatchEval = () => {
         const avgRouge2 = (result.results.reduce((acc, item) => acc + (item.rouge2 || 0), 0) / result.total_items * 100).toFixed(2);
         const avgRougeL = (result.results.reduce((acc, item) => acc + (item.rougeL || 0), 0) / result.total_items * 100).toFixed(2);
         const avgBleu = (result.results.reduce((acc, item) => acc + (item.bleu || 0), 0) / result.total_items * 100).toFixed(2);
-        
+
         const avgRow = ['AVG', '""', '""', avgRouge1, avgRouge2, avgRougeL, avgBleu];
         if (calculateBert) {
             const avgBert = (result.results.reduce((acc, item) => acc + (item.bert_score || 0), 0) / result.total_items * 100).toFixed(2);
@@ -126,7 +126,7 @@ const BatchEval = () => {
     };
 
     return (
-        <div className="max-w-5xl mx-auto space-y-8 pb-10 px-6">
+        <div className="space-y-8 pb-10">
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-slate-200 pb-6">
                 <div>

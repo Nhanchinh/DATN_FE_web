@@ -547,8 +547,14 @@ const History = () => {
                                         </td>
                                         <td className="py-3 px-4">
                                             {item.feedback ? (
-                                                <span className={`inline-block px-2 py-1 rounded text-xs font-semibold ${ratingColors[item.feedback.rating]}`}>
-                                                    {item.feedback.rating === 'good' ? '👍' : item.feedback.rating === 'bad' ? '👎' : '😐'} {item.feedback.rating}
+                                                <span className={`inline-flex items-center gap-1.5 px-2 py-1 rounded text-xs font-medium border ${item.feedback.rating === 'good'
+                                                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                                    : item.feedback.rating === 'bad'
+                                                        ? 'bg-red-50 text-red-700 border-red-200'
+                                                        : 'bg-slate-50 text-slate-600 border-slate-200'
+                                                    }`}>
+                                                    {item.feedback.rating === 'good' ? <ThumbsUp className="w-3 h-3" /> : item.feedback.rating === 'bad' ? <ThumbsDown className="w-3 h-3" /> : null}
+                                                    {item.feedback.rating}
                                                 </span>
                                             ) : (
                                                 <span className="text-slate-400 text-xs">-</span>
@@ -798,25 +804,25 @@ const History = () => {
                                         {selectedItem.feedback.human_eval.fluency && (
                                             <div className="bg-white p-3 rounded-lg text-center">
                                                 <div className="text-xl font-bold text-amber-600">{selectedItem.feedback.human_eval.fluency}/5</div>
-                                                <div className="text-xs text-slate-600">✍️ Fluency</div>
+                                                <div className="text-xs text-slate-600">Fluency</div>
                                             </div>
                                         )}
                                         {selectedItem.feedback.human_eval.coherence && (
                                             <div className="bg-white p-3 rounded-lg text-center">
                                                 <div className="text-xl font-bold text-amber-600">{selectedItem.feedback.human_eval.coherence}/5</div>
-                                                <div className="text-xs text-slate-600">🔗 Coherence</div>
+                                                <div className="text-xs text-slate-600">Coherence</div>
                                             </div>
                                         )}
                                         {selectedItem.feedback.human_eval.relevance && (
                                             <div className="bg-white p-3 rounded-lg text-center">
                                                 <div className="text-xl font-bold text-amber-600">{selectedItem.feedback.human_eval.relevance}/5</div>
-                                                <div className="text-xs text-slate-600">🎯 Relevance</div>
+                                                <div className="text-xs text-slate-600">Relevance</div>
                                             </div>
                                         )}
                                         {selectedItem.feedback.human_eval.consistency && (
                                             <div className="bg-white p-3 rounded-lg text-center">
                                                 <div className="text-xl font-bold text-amber-600">{selectedItem.feedback.human_eval.consistency}/5</div>
-                                                <div className="text-xs text-slate-600">✅ Consistency</div>
+                                                <div className="text-xs text-slate-600">Consistency</div>
                                             </div>
                                         )}
                                     </div>
@@ -836,14 +842,14 @@ const History = () => {
                                         <button
                                             key={r}
                                             onClick={() => setFeedbackForm(f => ({ ...f, rating: r }))}
-                                            className={`flex-1 py-3 rounded-lg font-semibold transition-all ${feedbackForm.rating === r
+                                            className={`flex-1 py-3 rounded-lg font-semibold transition-all flex items-center justify-center gap-2 ${feedbackForm.rating === r
                                                 ? r === 'good' ? 'bg-emerald-500 text-white'
                                                     : r === 'bad' ? 'bg-red-500 text-white'
                                                         : 'bg-slate-500 text-white'
                                                 : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                                                 }`}
                                         >
-                                            {r === 'good' ? '👍 Tốt' : r === 'bad' ? '👎 Tệ' : '😐 Trung bình'}
+                                            {r === 'good' ? <><ThumbsUp className="w-4 h-4" /> Tốt</> : r === 'bad' ? <><ThumbsDown className="w-4 h-4" /> Tệ</> : 'Trung bình'}
                                         </button>
                                     ))}
                                 </div>
