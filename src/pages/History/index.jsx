@@ -139,8 +139,12 @@ const History = () => {
         }
     };
 
-    // Quick feedback (thumbs up/down from table)
+    // Quick feedback (thumbs up/down from table) - Only works if no human_eval
     const quickFeedback = async (item, rating) => {
+        // Block if human_eval already exists
+        if (item.feedback?.human_eval) {
+            return;
+        }
         try {
             await historyService.addFeedback(item.id, { rating });
             fetchHistory();
@@ -547,13 +551,22 @@ const History = () => {
                                         </td>
                                         <td className="py-3 px-4">
                                             {item.feedback ? (
-                                                <span className={`inline-flex items-center gap-1.5 px-2 py-1 rounded text-xs font-medium border ${item.feedback.rating === 'good'
-                                                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                                                    : item.feedback.rating === 'bad'
-                                                        ? 'bg-red-50 text-red-700 border-red-200'
-                                                        : 'bg-slate-50 text-slate-600 border-slate-200'
+                                                <span className={`inline-flex items-center gap-1.5 px-2 py-1 rounded text-xs font-medium border ${item.feedback.human_eval
+                                                        ? 'bg-amber-50 text-amber-700 border-amber-200'
+                                                        : item.feedback.rating === 'good'
+                                                            ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                                            : item.feedback.rating === 'bad'
+                                                                ? 'bg-red-50 text-red-700 border-red-200'
+                                                                : 'bg-slate-50 text-slate-600 border-slate-200'
                                                     }`}>
-                                                    {item.feedback.rating === 'good' ? <ThumbsUp className="w-3 h-3" /> : item.feedback.rating === 'bad' ? <ThumbsDown className="w-3 h-3" /> : null}
+                                                    {item.feedback.human_eval
+                                                        ? <Star className="w-3 h-3" />
+                                                        : item.feedback.rating === 'good'
+                                                            ? <ThumbsUp className="w-3 h-3" />
+                                                            : item.feedback.rating === 'bad'
+                                                                ? <ThumbsDown className="w-3 h-3" />
+                                                                : null
+                                                    }
                                                     {item.feedback.rating}
                                                 </span>
                                             ) : (
@@ -562,17 +575,30 @@ const History = () => {
                                         </td>
                                         <td className="py-3 px-4">
                                             <div className="flex items-center justify-center gap-1">
+                                                {/* Quick feedback buttons - disabled if human_eval exists */}
                                                 <button
                                                     onClick={() => quickFeedback(item, 'good')}
-                                                    className={`p-1.5 rounded hover:bg-emerald-100 ${item.feedback?.rating === 'good' ? 'bg-emerald-100 text-emerald-600' : 'text-slate-400'}`}
-                                                    title="Tốt"
+                                                    disabled={!!item.feedback?.human_eval}
+                                                    className={`p-1.5 rounded transition-colors ${item.feedback?.human_eval
+                                                        ? 'opacity-30 cursor-not-allowed text-slate-300'
+                                                        : item.feedback?.rating === 'good'
+                                                            ? 'bg-emerald-100 text-emerald-600'
+                                                            : 'text-slate-400 hover:bg-emerald-100 hover:text-emerald-600'
+                                                        }`}
+                                                    title={item.feedback?.human_eval ? 'Đã có Human Eval - sửa qua ⭐' : 'Tốt'}
                                                 >
                                                     <ThumbsUp className="w-4 h-4" />
                                                 </button>
                                                 <button
                                                     onClick={() => quickFeedback(item, 'bad')}
-                                                    className={`p-1.5 rounded hover:bg-red-100 ${item.feedback?.rating === 'bad' ? 'bg-red-100 text-red-600' : 'text-slate-400'}`}
-                                                    title="Tệ"
+                                                    disabled={!!item.feedback?.human_eval}
+                                                    className={`p-1.5 rounded transition-colors ${item.feedback?.human_eval
+                                                        ? 'opacity-30 cursor-not-allowed text-slate-300'
+                                                        : item.feedback?.rating === 'bad'
+                                                            ? 'bg-red-100 text-red-600'
+                                                            : 'text-slate-400 hover:bg-red-100 hover:text-red-600'
+                                                        }`}
+                                                    title={item.feedback?.human_eval ? 'Đã có Human Eval - sửa qua ⭐' : 'Tệ'}
                                                 >
                                                     <ThumbsDown className="w-4 h-4" />
                                                 </button>
