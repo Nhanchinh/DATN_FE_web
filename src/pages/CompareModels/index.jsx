@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Loader2, AlertCircle, CheckCircle, RotateCcw, Play, Clock, FileText } from 'lucide-react';
+import { Loader2, AlertCircle, CheckCircle, RotateCcw, Play, Clock, FileText, Sparkles, Trophy, Award } from 'lucide-react';
 import Button from '@/components/common/Button';
 import { summarizeService } from '@/services';
 
@@ -15,6 +15,11 @@ const CompareModels = () => {
     const [results, setResults] = useState(null);
     const [error, setError] = useState('');
     const [selectedModels, setSelectedModels] = useState(['vit5', 'phobert_vit5', 'qwen']);
+
+    // AI Judge state
+    const [judging, setJudging] = useState(false);
+    const [judgeResult, setJudgeResult] = useState(null);
+    const [judgeError, setJudgeError] = useState('');
 
     const toggleModel = (modelId) => {
         setSelectedModels(prev =>
@@ -38,6 +43,8 @@ const CompareModels = () => {
         setLoading(true);
         setError('');
         setResults(null);
+        setJudgeResult(null);
+        setJudgeError('');
 
         try {
             const response = await summarizeService.compareModels(text, selectedModels);
@@ -50,10 +57,47 @@ const CompareModels = () => {
         }
     };
 
+    const handleAIJudge = async () => {
+        if (!results || results.results.length < 2) {
+            setJudgeError('Cần ít nhất 2 bản tóm tắt để AI đánh giá');
+            return;
+        }
+
+        setJudging(true);
+        setJudgeError('');
+        setJudgeResult(null);
+
+        try {
+            const summaries = results.results
+                .filter(r => !r.error)
+                .map(r => ({ model: r.model, summary: r.summary }));
+
+            if (summaries.length < 2) {
+                setJudgeError('Cần ít nhất 2 bản tóm tắt thành công để AI đánh giá');
+                return;
+            }
+
+            const response = await summarizeService.aiJudge(text, summaries);
+            setJudgeResult(response);
+        } catch (err) {
+            console.error('AI Judge error:', err);
+            setJudgeError(err.response?.data?.detail || 'Lỗi AI Judge. Kiểm tra GEMINI_API_KEY.');
+        } finally {
+            setJudging(false);
+        }
+    };
+
     const handleClear = () => {
         setText('');
         setResults(null);
         setError('');
+        setJudgeResult(null);
+        setJudgeError('');
+    };
+
+    const getModelName = (modelId) => {
+        const model = MODEL_OPTIONS.find(m => m.id === modelId);
+        return model?.name || modelId;
     };
 
     return (
@@ -148,11 +192,28 @@ const CompareModels = () => {
                             <CheckCircle className="w-4 h-4 text-emerald-600" />
                             <span className="text-sm font-medium text-slate-700">Kết quả</span>
                         </div>
-                        {results && (
-                            <span className="text-xs text-slate-400">
-                                {results.total_time_s}s tổng
-                            </span>
-                        )}
+                        <div className="flex items-center gap-2">
+                            {results && (
+                                <>
+                                    <span className="text-xs text-slate-400">
+                                        {results.total_time_s}s
+                                    </span>
+                                    <Button
+                                        size="sm"
+                                        className="gap-1.5 bg-amber-500 hover:bg-amber-600 text-white text-xs px-2 py-1"
+                                        onClick={handleAIJudge}
+                                        disabled={judging || results.results.filter(r => !r.error).length < 2}
+                                    >
+                                        {judging ? (
+                                            <Loader2 className="w-3 h-3 animate-spin" />
+                                        ) : (
+                                            <Sparkles className="w-3 h-3" />
+                                        )}
+                                        AI Judge
+                                    </Button>
+                                </>
+                            )}
+                        </div>
                     </div>
                     <div className="flex-1 p-4 overflow-y-auto">
                         {loading ? (
@@ -162,12 +223,55 @@ const CompareModels = () => {
                             </div>
                         ) : results ? (
                             <div className="space-y-4">
+                                {/* AI Judge Result */}
+                                {judgeError && (
+                                    <div className="bg-red-50 border border-red-200 text-red-600 p-3 rounded-lg text-sm">
+                                        {judgeError}
+                                    </div>
+                                )}
+
+                                {judgeResult && (
+                                    <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                                        <div className="flex items-center gap-2 mb-3">
+                                            <Trophy className="w-5 h-5 text-amber-600" />
+                                            <span className="font-semibold text-amber-900">AI Judge Result</span>
+                                            <span className="text-xs text-amber-600 ml-auto">{judgeResult.processing_time_ms}ms</span>
+                                        </div>
+
+                                        {/* Winner */}
+                                        <div className="flex items-center gap-2 mb-3">
+                                            <Award className="w-4 h-4 text-amber-600" />
+                                            <span className="text-sm text-slate-700">Winner:</span>
+                                            <span className="font-semibold text-amber-900">{getModelName(judgeResult.winner)}</span>
+                                        </div>
+
+                                        {/* Rankings */}
+                                        <div className="grid grid-cols-3 gap-2 mb-3">
+                                            {judgeResult.rankings.map((r) => (
+                                                <div key={r.model} className={`p-2 rounded text-center ${r.rank === 1 ? 'bg-amber-100' : 'bg-white'}`}>
+                                                    <div className="text-xs text-slate-500">#{r.rank}</div>
+                                                    <div className="font-medium text-slate-800 text-sm">{getModelName(r.model)}</div>
+                                                    <div className="text-lg font-bold text-amber-600">{r.score}</div>
+                                                </div>
+                                            ))}
+                                        </div>
+
+                                        {/* Analysis */}
+                                        <p className="text-sm text-slate-700 bg-white p-2 rounded border border-amber-100">
+                                            {judgeResult.detailed_analysis}
+                                        </p>
+                                    </div>
+                                )}
+
+                                {/* Model Results */}
                                 {results.results.map((result, idx) => {
                                     const model = MODEL_OPTIONS.find(m => m.id === result.model);
+                                    const isWinner = judgeResult?.winner === result.model;
                                     return (
-                                        <div key={idx} className="border border-slate-200 rounded-lg overflow-hidden">
-                                            <div className="px-4 py-3 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
+                                        <div key={idx} className={`border rounded-lg overflow-hidden ${isWinner ? 'border-amber-300 ring-2 ring-amber-100' : 'border-slate-200'}`}>
+                                            <div className={`px-4 py-3 border-b flex items-center justify-between ${isWinner ? 'bg-amber-50 border-amber-100' : 'bg-slate-50 border-slate-100'}`}>
                                                 <div className="flex items-center gap-2">
+                                                    {isWinner && <Trophy className="w-4 h-4 text-amber-500" />}
                                                     <span className="font-medium text-slate-900 text-sm">{model?.name || result.model}</span>
                                                     <span className="text-xs text-slate-400 bg-slate-200 px-1.5 py-0.5 rounded">{model?.tag}</span>
                                                 </div>

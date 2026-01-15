@@ -53,6 +53,17 @@ const summarizeService = {
             headers: { 'Content-Type': 'multipart/form-data' }
         });
     },
+
+    /**
+     * AI Judge - Sử dụng Gemini để so sánh và đánh giá các bản tóm tắt
+     * @param {string} originalText - Văn bản gốc
+     * @param {Array<{model: string, summary: string}>} summaries - Các bản tóm tắt cần so sánh
+     */
+    aiJudge: (originalText, summaries) =>
+        api.post('/summarization/ai-judge', {
+            original_text: originalText,
+            summaries
+        }),
 };
 
 export default summarizeService;
