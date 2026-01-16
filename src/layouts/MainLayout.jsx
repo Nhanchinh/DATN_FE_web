@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Terminal, Database, ChevronRight, Menu, LogOut, User, Settings, ChevronUp, History, FileCheck, GitCompare, Users, Download, Shield } from 'lucide-react';
+import { LayoutDashboard, Terminal, Database, ChevronRight, Menu, LogOut, Settings, ChevronUp, History, FileCheck, GitCompare, Users, Shield } from 'lucide-react';
 import { useAuth } from '@/hooks';
+import { ServerStatus } from '@/components/common';
 
 /**
  * MainLayout - Research Dashboard Layout
@@ -88,6 +89,9 @@ const MainLayout = () => {
                         </>
                     )}
                 </nav>
+
+                {/* Server Status Indicator */}
+                <ServerStatus />
 
                 {/* User Section with Dropdown */}
                 <div className="p-4 border-t border-slate-800 relative" ref={menuRef}>
