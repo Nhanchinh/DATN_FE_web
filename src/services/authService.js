@@ -30,6 +30,13 @@ const authService = {
             new_password: newPassword
         }),
 
+    // Settings APIs
+    getSettings: () =>
+        api.get('/auth/settings'),
+
+    updateSettings: (settings) =>
+        api.put('/auth/settings', settings),
+
     seedTestUser: () =>
         api.post('/auth/seed-test-user'),
 

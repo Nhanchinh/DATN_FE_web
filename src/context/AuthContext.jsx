@@ -121,6 +121,19 @@ export const AuthProvider = ({ children }) => {
         }
     }, []);
 
+    // Refresh user data từ server (khi cập nhật settings)
+    const refreshUser = useCallback(async () => {
+        try {
+            const userData = await authService.me();
+            setUser(userData);
+            localStorage.setItem(APP_CONFIG.STORAGE_KEYS.USER_INFO, JSON.stringify(userData));
+            return userData;
+        } catch (error) {
+            console.error('Refresh user failed:', error);
+            return null;
+        }
+    }, []);
+
     const value = {
         user,
         isLoading,
@@ -128,6 +141,7 @@ export const AuthProvider = ({ children }) => {
         login,
         logout,
         register,
+        refreshUser,
     };
 
     return (

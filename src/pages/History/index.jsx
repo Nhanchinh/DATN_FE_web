@@ -20,11 +20,16 @@ import {
 } from 'lucide-react';
 import { Button, HumanEvalModal } from '@/components/common';
 import { historyService } from '@/services';
+import { useAuth } from '@/hooks';
 
 /**
  * History Page - Trang lịch sử tóm tắt với feedback system
  */
 const History = () => {
+    // Auth - lấy thông tin user để kiểm tra quyền
+    const { user } = useAuth();
+    const isAdmin = user?.role === 'admin';
+
     // State
     const [items, setItems] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -397,25 +402,31 @@ const History = () => {
                         <Filter className="w-4 h-4" />
                         Filters
                     </Button>
-                    <Button
-                        size="sm"
-                        className="bg-red-400 hover:bg-red-500 text-white gap-2"
-                        onClick={exportBadSummaries}
-                        disabled={exporting}
-                    >
-                        {exporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-                        Export Bad
-                    </Button>
-                    <Button
-                        size="sm"
-                        className="bg-amber-500 hover:bg-amber-600 text-white gap-2"
-                        onClick={exportHumanEval}
-                        disabled={exportingHumanEval}
-                    >
-                        {exportingHumanEval ? <Loader2 className="w-4 h-4 animate-spin" /> : <Star className="w-4 h-4" />}
-                        Export Human Eval
-                    </Button>
-                    {selectedIds.length > 0 && (
+                    {/* Export buttons - Admin only */}
+                    {isAdmin && (
+                        <>
+                            <Button
+                                size="sm"
+                                className="bg-red-400 hover:bg-red-500 text-white gap-2"
+                                onClick={exportBadSummaries}
+                                disabled={exporting}
+                            >
+                                {exporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                                Export Bad
+                            </Button>
+                            <Button
+                                size="sm"
+                                className="bg-amber-500 hover:bg-amber-600 text-white gap-2"
+                                onClick={exportHumanEval}
+                                disabled={exportingHumanEval}
+                            >
+                                {exportingHumanEval ? <Loader2 className="w-4 h-4 animate-spin" /> : <Star className="w-4 h-4" />}
+                                Export Human Eval
+                            </Button>
+                        </>
+                    )}
+                    {/* Bulk delete - Admin only */}
+                    {isAdmin && selectedIds.length > 0 && (
                         <Button
                             size="sm"
                             className="bg-orange-400 hover:bg-orange-500 text-white gap-2"
@@ -426,15 +437,18 @@ const History = () => {
                             Xóa ({selectedIds.length})
                         </Button>
                     )}
-                    <Button
-                        size="sm"
-                        className="bg-red-400 hover:bg-red-500 text-white gap-2"
-                        onClick={handleDeleteAll}
-                        disabled={deleting || items.length === 0}
-                    >
-                        <Trash2 className="w-4 h-4" />
-                        Xóa tất cả
-                    </Button>
+                    {/* Delete all - Admin only */}
+                    {isAdmin && (
+                        <Button
+                            size="sm"
+                            className="bg-red-400 hover:bg-red-500 text-white gap-2"
+                            onClick={handleDeleteAll}
+                            disabled={deleting || items.length === 0}
+                        >
+                            <Trash2 className="w-4 h-4" />
+                            Xóa tất cả
+                        </Button>
+                    )}
                 </div>
             </div>
 
@@ -552,12 +566,12 @@ const History = () => {
                                         <td className="py-3 px-4">
                                             {item.feedback ? (
                                                 <span className={`inline-flex items-center gap-1.5 px-2 py-1 rounded text-xs font-medium border ${item.feedback.human_eval
-                                                        ? 'bg-amber-50 text-amber-700 border-amber-200'
-                                                        : item.feedback.rating === 'good'
-                                                            ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                                                            : item.feedback.rating === 'bad'
-                                                                ? 'bg-red-50 text-red-700 border-red-200'
-                                                                : 'bg-slate-50 text-slate-600 border-slate-200'
+                                                    ? 'bg-amber-50 text-amber-700 border-amber-200'
+                                                    : item.feedback.rating === 'good'
+                                                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                                        : item.feedback.rating === 'bad'
+                                                            ? 'bg-red-50 text-red-700 border-red-200'
+                                                            : 'bg-slate-50 text-slate-600 border-slate-200'
                                                     }`}>
                                                     {item.feedback.human_eval
                                                         ? <Star className="w-3 h-3" />

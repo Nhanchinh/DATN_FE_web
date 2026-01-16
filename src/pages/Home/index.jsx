@@ -8,9 +8,7 @@ const Home = () => {
     return (
         <div className="max-w-7xl mx-auto space-y-16">
             <section className="text-center py-16 px-4">
-                <div className="inline-block bg-gradient-to-r from-blue-500 to-purple-600 text-white px-4 py-1.5 rounded-full text-sm font-medium mb-6 shadow-sm">
-                    🎓 Đồ án tốt nghiệp
-                </div>
+
                 <h1 className="text-4xl md:text-6xl font-extrabold text-slate-800 mb-6 leading-tight">
                     Hệ thống <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">Đánh giá Tóm tắt</span> Văn bản
                 </h1>

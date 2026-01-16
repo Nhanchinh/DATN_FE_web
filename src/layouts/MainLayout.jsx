@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Terminal, Database, ChevronRight, Menu, LogOut, User, Settings, ChevronUp, History, FileCheck, GitCompare } from 'lucide-react';
+import { LayoutDashboard, Terminal, Database, ChevronRight, Menu, LogOut, User, Settings, ChevronUp, History, FileCheck, GitCompare, Users, Download, Shield } from 'lucide-react';
 import { useAuth } from '@/hooks';
 
 /**
@@ -50,7 +50,7 @@ const MainLayout = () => {
                     <div className="text-xs text-slate-500 mt-1 uppercase tracking-wider font-semibold">Evaluation System</div>
                 </NavLink>
 
-                <nav className="flex-1 px-4 space-y-2 mt-4">
+                <nav className="flex-1 px-4 space-y-2 mt-4 overflow-y-auto">
                     <div className="text-xs font-semibold text-slate-500 px-3 mb-2 uppercase tracking-wider">Research</div>
                     {navItems.map((item) => (
                         <NavLink
@@ -66,6 +66,27 @@ const MainLayout = () => {
                             <ChevronRight className="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
                         </NavLink>
                     ))}
+
+                    {/* Admin-only navigation section */}
+                    {user?.role === 'admin' && (
+                        <>
+                            <div className="text-xs font-semibold text-amber-500 px-3 mt-6 mb-2 uppercase tracking-wider flex items-center gap-2">
+                                <Shield className="w-3 h-3" />
+                                Admin
+                            </div>
+                            <NavLink
+                                to="/admin/users"
+                                className={({ isActive }) => `
+                                    flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group
+                                    ${isActive ? 'bg-amber-600 text-white shadow-lg shadow-amber-900/20' : 'hover:bg-slate-800 hover:text-white border border-slate-700/50'}
+                                `}
+                            >
+                                <Users className="w-5 h-5" />
+                                <span className="font-medium">Quản lý Users</span>
+                                <ChevronRight className="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
+                            </NavLink>
+                        </>
+                    )}
                 </nav>
 
                 {/* User Section with Dropdown */}
@@ -89,22 +110,22 @@ const MainLayout = () => {
                                     </div>
                                 </div>
                                 <div className="mt-2 px-1">
-                                    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-500/20 text-blue-400">
-                                        {user?.role === 'admin' ? '👑 Admin' : '🧑‍🔬 Researcher'}
+                                    <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${user?.role === 'admin' ? 'bg-amber-500/20 text-amber-400' : 'bg-blue-500/20 text-blue-400'}`}>
+                                        {user?.role === 'admin' ? 'Admin' : 'User'}
                                     </span>
                                 </div>
                             </div>
 
                             {/* Menu Items */}
                             <div className="py-1">
-                                <button className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-slate-300 hover:bg-slate-700 hover:text-white transition-colors">
-                                    <User className="w-4 h-4" />
-                                    Hồ sơ cá nhân
-                                </button>
-                                <button className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-slate-300 hover:bg-slate-700 hover:text-white transition-colors">
+                                <NavLink
+                                    to="/settings"
+                                    onClick={() => setShowUserMenu(false)}
+                                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-slate-300 hover:bg-slate-700 hover:text-white transition-colors"
+                                >
                                     <Settings className="w-4 h-4" />
                                     Cài đặt
-                                </button>
+                                </NavLink>
                             </div>
 
                             {/* Logout */}
@@ -133,7 +154,7 @@ const MainLayout = () => {
                                 {user?.full_name || 'User'}
                             </div>
                             <div className="text-xs text-slate-500 truncate">
-                                {user?.role === 'admin' ? 'Admin' : 'Pro Plan'}
+                                {user?.email}
                             </div>
                         </div>
                         <ChevronUp className={`w-4 h-4 text-slate-500 transition-transform ${showUserMenu ? 'rotate-180' : ''}`} />

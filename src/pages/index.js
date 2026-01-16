@@ -7,3 +7,5 @@ export { default as BatchEval } from './BatchEval';
 export { default as SingleEval } from './SingleEval';
 export { default as Analytics } from './Analytics';
 export { default as History } from './History';
+export { default as Settings } from './Settings';
+export { default as UserManagement } from './UserManagement';
