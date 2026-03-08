@@ -16,6 +16,7 @@ import { summarizeService, historyService } from '@/services';
 const MODEL_OPTIONS = [
     { value: 'phobert_vit5', label: 'PhoBERT + ViT5', tag: 'Best' },
     { value: 'vit5', label: 'ViT5', tag: 'Fast' },
+    { value: 'vit5_fin', label: 'ViT5 Financial v2', tag: 'Finance' },
     { value: 'qwen', label: 'Qwen 2.5-7B', tag: 'LLM' },
 ];
 
