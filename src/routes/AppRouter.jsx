@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { MainLayout, AuthLayout } from '@/layouts';
-import { Home, Login, Register, Playground, CompareModels, BatchEval, SingleEval, Analytics, History, Settings, UserManagement } from '@/pages';
+import { Home, Login, Register, Playground, CompareModels, BatchEval, BatchSummarize, SingleEval, Analytics, History, Settings, UserManagement } from '@/pages';
 import { ProtectedRoute } from '@/components/common';
 
 /**
@@ -25,6 +25,7 @@ const AppRouter = () => {
                     <Route path="/compare" element={<CompareModels />} />
                     <Route path="/single-eval" element={<SingleEval />} />
                     <Route path="/batch-eval" element={<BatchEval />} />
+                    <Route path="/batch-summarize" element={<BatchSummarize />} />
                     <Route path="/analytics" element={<Analytics />} />
                     <Route path="/history" element={<History />} />
                     <Route path="/settings" element={<Settings />} />

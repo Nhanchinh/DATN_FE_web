@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Terminal, Database, ChevronRight, Menu, LogOut, Settings, ChevronUp, History, FileCheck, GitCompare, Users, Shield } from 'lucide-react';
+import { LayoutDashboard, Terminal, Database, ChevronRight, Menu, LogOut, Settings, ChevronUp, History, FileCheck, GitCompare, Users, Shield, FileSpreadsheet } from 'lucide-react';
 import { useAuth } from '@/hooks';
 import { ServerStatus } from '@/components/common';
 
@@ -20,6 +20,7 @@ const MainLayout = () => {
         { path: '/compare', label: 'Compare', icon: GitCompare },
         { path: '/single-eval', label: 'Single Eval', icon: FileCheck },
         { path: '/batch-eval', label: 'Batch Eval', icon: Database },
+        { path: '/batch-summarize', label: 'Batch Tóm tắt', icon: FileSpreadsheet },
         { path: '/history', label: 'History', icon: History },
     ];
 
