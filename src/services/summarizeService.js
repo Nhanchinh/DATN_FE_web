@@ -64,6 +64,13 @@ const summarizeService = {
             original_text: originalText,
             summaries
         }),
+
+    /**
+     * Sinh bản tóm tắt gold bằng AI (Gemini)
+     * @param {string} text - Văn bản gốc
+     */
+    generateReference: (text) =>
+        api.post('/summarization/generate-reference', { text }),
 };
 
 export default summarizeService;

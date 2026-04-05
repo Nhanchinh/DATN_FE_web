@@ -8,10 +8,14 @@ import {
     CheckCircle,
     AlertCircle,
     Square,
-    ChevronDown
+    ChevronDown,
+    BarChart3,
+    Sparkles,
+    ChevronUp,
+    X
 } from 'lucide-react';
 import { Button } from '@/components/common';
-import { summarizeService, historyService } from '@/services';
+import { summarizeService, historyService, evaluationService } from '@/services';
 
 const MODEL_OPTIONS = [
     { value: 'phobert_vit5', label: 'PhoBERT + ViT5', tag: 'Best' },
@@ -19,6 +23,21 @@ const MODEL_OPTIONS = [
     { value: 'vit5_fin', label: 'ViT5 Financial v2', tag: 'Finance' },
     { value: 'qwen', label: 'Qwen 2.5-7B', tag: 'LLM' },
 ];
+
+const ScoreBar = ({ label, value, color = 'bg-blue-500' }) => (
+    <div className="flex items-center gap-2">
+        <span className="text-xs text-slate-500 w-20 shrink-0">{label}</span>
+        <div className="flex-1 bg-slate-100 rounded-full h-2">
+            <div
+                className={`${color} h-2 rounded-full transition-all duration-500`}
+                style={{ width: `${Math.min(value * 100, 100)}%` }}
+            />
+        </div>
+        <span className="text-xs font-semibold text-slate-700 w-12 text-right">
+            {(value * 100).toFixed(1)}%
+        </span>
+    </div>
+);
 
 const Playground = () => {
     const [model, setModel] = useState('phobert_vit5');
@@ -29,6 +48,15 @@ const Playground = () => {
     const [error, setError] = useState('');
     const [copied, setCopied] = useState(false);
     const [elapsedTime, setElapsedTime] = useState(0);
+
+    // Evaluation state
+    const [showEval, setShowEval] = useState(false);
+    const [reference, setReference] = useState('');
+    const [evalLoading, setEvalLoading] = useState(false);
+    const [evalResult, setEvalResult] = useState(null);
+    const [evalError, setEvalError] = useState('');
+    const [genRefLoading, setGenRefLoading] = useState(false);
+    const [calculateBert, setCalculateBert] = useState(true);
 
     const abortControllerRef = useRef(null);
     const timerRef = useRef(null);
@@ -47,6 +75,7 @@ const Playground = () => {
         setError('');
         setMetrics(null);
         setElapsedTime(0);
+        setEvalResult(null);
 
         const startTime = Date.now();
 
@@ -127,6 +156,50 @@ const Playground = () => {
         setMetrics(null);
         setError('');
         setElapsedTime(0);
+        setShowEval(false);
+        setReference('');
+        setEvalResult(null);
+        setEvalError('');
+    };
+
+    // Generate reference summary using Gemini
+    const handleGenerateReference = async () => {
+        if (!input.trim()) return;
+
+        setGenRefLoading(true);
+        setEvalError('');
+
+        try {
+            const response = await summarizeService.generateReference(input);
+            setReference(response.reference_summary);
+        } catch (err) {
+            console.error('Generate reference error:', err);
+            setEvalError(err.response?.data?.detail || 'Lỗi sinh tóm tắt gold. Kiểm tra GEMINI_API_KEY.');
+        } finally {
+            setGenRefLoading(false);
+        }
+    };
+
+    // Evaluate summary against reference
+    const handleEvaluate = async () => {
+        if (!output.trim() || !reference.trim()) {
+            setEvalError('Cần có bản tóm tắt và bản tham chiếu để đánh giá');
+            return;
+        }
+
+        setEvalLoading(true);
+        setEvalError('');
+        setEvalResult(null);
+
+        try {
+            const response = await evaluationService.evaluateSingle(output, reference, calculateBert);
+            setEvalResult(response);
+        } catch (err) {
+            console.error('Evaluation error:', err);
+            setEvalError(err.response?.data?.detail || 'Lỗi đánh giá');
+        } finally {
+            setEvalLoading(false);
+        }
     };
 
     const selectedModel = MODEL_OPTIONS.find(m => m.value === model);
@@ -202,7 +275,7 @@ const Playground = () => {
             )}
 
             {/* Main Content */}
-            <div className="flex-1 grid grid-cols-2 gap-4 overflow-hidden">
+            <div className={`flex-1 grid ${showEval ? 'grid-cols-3' : 'grid-cols-2'} gap-4 overflow-hidden transition-all`}>
                 {/* Input */}
                 <div className="flex flex-col bg-white rounded-lg border border-slate-200 overflow-hidden">
                     <div className="p-3 border-b border-slate-100 bg-blue-50 flex items-center gap-2">
@@ -228,15 +301,27 @@ const Playground = () => {
                             <CheckCircle className="w-4 h-4 text-emerald-600" />
                             <span className="text-sm font-medium text-slate-700">Bản tóm tắt</span>
                         </div>
-                        {output && (
-                            <button
-                                className={`p-1.5 rounded text-xs flex items-center gap-1 transition-colors ${copied ? 'text-emerald-600 bg-emerald-50' : 'text-slate-500 hover:bg-slate-100'}`}
-                                onClick={handleCopy}
-                            >
-                                {copied ? <CheckCircle className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-                                {copied ? 'Copied' : 'Copy'}
-                            </button>
-                        )}
+                        <div className="flex items-center gap-1.5">
+                            {output && (
+                                <>
+                                    <button
+                                        className={`p-1.5 rounded text-xs flex items-center gap-1 transition-colors ${copied ? 'text-emerald-600 bg-emerald-50' : 'text-slate-500 hover:bg-slate-100'}`}
+                                        onClick={handleCopy}
+                                    >
+                                        {copied ? <CheckCircle className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                                        {copied ? 'Copied' : 'Copy'}
+                                    </button>
+                                    <button
+                                        className={`p-1.5 rounded text-xs flex items-center gap-1 transition-colors ${showEval ? 'text-violet-600 bg-violet-50' : 'text-slate-500 hover:bg-slate-100'}`}
+                                        onClick={() => setShowEval(!showEval)}
+                                        title="Đánh giá chất lượng"
+                                    >
+                                        <BarChart3 className="w-3.5 h-3.5" />
+                                        {showEval ? <ChevronUp className="w-3 h-3" /> : 'Đánh giá'}
+                                    </button>
+                                </>
+                            )}
+                        </div>
                     </div>
                     <div className="flex-1 p-4 overflow-y-auto">
                         {isLoading ? (
@@ -261,6 +346,127 @@ const Playground = () => {
                         </div>
                     )}
                 </div>
+
+                {/* Evaluation Panel */}
+                {showEval && (
+                    <div className="flex flex-col bg-white rounded-lg border border-violet-200 overflow-hidden">
+                        <div className="p-3 border-b border-violet-100 bg-violet-50 flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <BarChart3 className="w-4 h-4 text-violet-600" />
+                                <span className="text-sm font-medium text-slate-700">Đánh giá chất lượng</span>
+                            </div>
+                            <button
+                                className="p-1 hover:bg-violet-100 rounded text-slate-400 transition-colors"
+                                onClick={() => setShowEval(false)}
+                            >
+                                <X className="w-3.5 h-3.5" />
+                            </button>
+                        </div>
+
+                        <div className="flex-1 p-3 overflow-y-auto space-y-3">
+                            {/* Reference Input */}
+                            <div>
+                                <div className="flex items-center justify-between mb-1.5">
+                                    <label className="text-xs font-medium text-slate-600">Tóm tắt tham chiếu (Gold)</label>
+                                    <button
+                                        className="text-xs flex items-center gap-1 text-violet-600 hover:text-violet-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                        onClick={handleGenerateReference}
+                                        disabled={genRefLoading || !input.trim()}
+                                        title="Dùng AI (Gemini) để tự động sinh bản tóm tắt gold"
+                                    >
+                                        {genRefLoading ? (
+                                            <Loader2 className="w-3 h-3 animate-spin" />
+                                        ) : (
+                                            <Sparkles className="w-3 h-3" />
+                                        )}
+                                        {genRefLoading ? 'Đang sinh...' : 'AI sinh tự động'}
+                                    </button>
+                                </div>
+                                <textarea
+                                    className="w-full h-28 p-2.5 text-xs border border-slate-200 rounded-lg resize-none focus:outline-none focus:ring-1 focus:ring-violet-400 focus:border-violet-400 text-slate-700 leading-relaxed"
+                                    placeholder="Nhập bản tóm tắt tham chiếu hoặc nhấn 'AI sinh tự động'..."
+                                    value={reference}
+                                    onChange={(e) => setReference(e.target.value)}
+                                />
+                            </div>
+
+                            {/* BERTScore toggle + Evaluate button */}
+                            <div className="flex items-center gap-2">
+                                <label className="flex items-center gap-1.5 text-xs text-slate-600 cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        checked={calculateBert}
+                                        onChange={(e) => setCalculateBert(e.target.checked)}
+                                        className="w-3.5 h-3.5 rounded border-slate-300 text-violet-600 focus:ring-violet-500"
+                                    />
+                                    BERTScore
+                                </label>
+                                <Button
+                                    size="sm"
+                                    className="flex-1 gap-1.5 bg-violet-600 hover:bg-violet-700 text-white text-xs py-1.5"
+                                    onClick={handleEvaluate}
+                                    disabled={evalLoading || !output.trim() || !reference.trim()}
+                                >
+                                    {evalLoading ? (
+                                        <Loader2 className="w-3 h-3 animate-spin" />
+                                    ) : (
+                                        <BarChart3 className="w-3 h-3" />
+                                    )}
+                                    {evalLoading ? 'Đang chấm...' : 'Chấm điểm'}
+                                </Button>
+                            </div>
+
+                            {/* Eval Error */}
+                            {evalError && (
+                                <div className="bg-red-50 border border-red-100 text-red-600 p-2 rounded-lg text-xs flex items-center gap-1.5">
+                                    <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                                    {evalError}
+                                </div>
+                            )}
+
+                            {/* Eval Results */}
+                            {evalResult && (
+                                <div className="space-y-2.5 bg-slate-50 rounded-lg p-3">
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-xs font-semibold text-slate-700">Kết quả đánh giá</span>
+                                        <span className="text-xs text-slate-400">{evalResult.processing_time_ms}ms</span>
+                                    </div>
+
+                                    <div className="space-y-1.5">
+                                        <ScoreBar label="ROUGE-1" value={evalResult.rouge1} color="bg-blue-500" />
+                                        <ScoreBar label="ROUGE-2" value={evalResult.rouge2} color="bg-sky-500" />
+                                        <ScoreBar label="ROUGE-L" value={evalResult.rougeL} color="bg-cyan-500" />
+                                        <ScoreBar label="BLEU" value={evalResult.bleu} color="bg-emerald-500" />
+                                        {calculateBert && (
+                                            <ScoreBar label="BERTScore" value={evalResult.bert_score} color="bg-violet-500" />
+                                        )}
+                                    </div>
+
+                                    {/* Summary scores */}
+                                    <div className="grid grid-cols-2 gap-2 pt-1.5 border-t border-slate-200">
+                                        <div className="text-center p-2 bg-white rounded-lg">
+                                            <div className="text-xs text-slate-500">ROUGE-L</div>
+                                            <div className="text-lg font-bold text-cyan-600">
+                                                {(evalResult.rougeL * 100).toFixed(1)}
+                                            </div>
+                                        </div>
+                                        <div className="text-center p-2 bg-white rounded-lg">
+                                            <div className="text-xs text-slate-500">
+                                                {calculateBert ? 'BERTScore' : 'BLEU'}
+                                            </div>
+                                            <div className={`text-lg font-bold ${calculateBert ? 'text-violet-600' : 'text-emerald-600'}`}>
+                                                {calculateBert
+                                                    ? (evalResult.bert_score * 100).toFixed(1)
+                                                    : (evalResult.bleu * 100).toFixed(1)
+                                                }
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )}
             </div>
 
             {/* Stats Bar */}
