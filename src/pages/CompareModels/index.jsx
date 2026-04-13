@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Loader2, AlertCircle, CheckCircle, RotateCcw, Play, Clock, FileText, Sparkles, Trophy, Award, Search } from 'lucide-react';
+import { Loader2, AlertCircle, CheckCircle, RotateCcw, Play, Clock, FileText, Sparkles, Trophy, ChevronDown, ChevronUp } from 'lucide-react';
 import Button from '@/components/common/Button';
 import { summarizeService } from '@/services';
 
@@ -8,6 +8,12 @@ const MODEL_OPTIONS = [
     { id: 'qwen', name: 'Qwen 7B', tag: 'LLM' },
     { id: 'phobert_finance', name: 'PhoBERT Finance', tag: 'Extractive' }
 ];
+
+const RANK_STYLES = {
+    1: { bg: 'bg-amber-50', border: 'border-amber-200', badge: 'bg-amber-100 text-amber-800', score: 'text-amber-600' },
+    2: { bg: 'bg-slate-50', border: 'border-slate-200', badge: 'bg-slate-100 text-slate-600', score: 'text-slate-600' },
+    3: { bg: 'bg-slate-50', border: 'border-slate-200', badge: 'bg-slate-100 text-slate-500', score: 'text-slate-500' },
+};
 
 const CompareModels = () => {
     const [text, setText] = useState('');
@@ -87,12 +93,27 @@ const CompareModels = () => {
         }
     };
 
+    const [expandedModels, setExpandedModels] = useState(new Set());
+
+    const toggleExpand = (modelId) => {
+        setExpandedModels(prev => {
+            const next = new Set(prev);
+            if (next.has(modelId)) {
+                next.delete(modelId);
+            } else {
+                next.add(modelId);
+            }
+            return next;
+        });
+    };
+
     const handleClear = () => {
         setText('');
         setResults(null);
         setError('');
         setJudgeResult(null);
         setJudgeError('');
+        setExpandedModels(new Set());
     };
 
     const getModelName = (modelId) => {
@@ -231,127 +252,170 @@ const CompareModels = () => {
                                 )}
 
                                 {judgeResult && (
-                                    <div className="space-y-3">
-                                        {/* Overall Winner Card */}
-                                        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-                                            <div className="flex items-center gap-2 mb-3">
-                                                <Trophy className="w-5 h-5 text-amber-600" />
-                                                <span className="font-semibold text-amber-900">AI Judge Result</span>
-                                                <span className="text-xs text-amber-600 ml-auto">{judgeResult.processing_time_ms}ms</span>
-                                            </div>
-
-                                            {/* Rankings */}
-                                            <div className="flex gap-2 mb-3">
-                                                {judgeResult.rankings.map((r) => (
-                                                    <div key={r.model} className={`flex-1 p-2.5 rounded-lg text-center ${r.rank === 1 ? 'bg-amber-100 border border-amber-300' : 'bg-white border border-slate-200'}`}>
-                                                        <div className="text-xs text-slate-500 mb-0.5">#{r.rank}</div>
-                                                        <div className="font-semibold text-slate-800 text-sm">{getModelName(r.model)}</div>
-                                                        <div className={`text-xl font-bold ${r.rank === 1 ? 'text-amber-600' : 'text-slate-500'}`}>{r.score}</div>
-                                                        <div className="text-xs text-slate-500 mt-1 leading-snug">{r.reasoning}</div>
-                                                    </div>
-                                                ))}
-                                            </div>
-
-                                            {/* Overall Analysis */}
-                                            <p className="text-sm text-slate-700 bg-white p-2.5 rounded-lg border border-amber-100 leading-relaxed">
-                                                {judgeResult.detailed_analysis}
-                                            </p>
+                                    <div className="mb-2">
+                                        {/* Header */}
+                                        <div className="flex items-center justify-between mb-4">
+                                            <h3 className="text-sm font-semibold text-slate-800 tracking-tight">Kết quả đánh giá</h3>
+                                            <span className="text-[11px] text-slate-400 font-mono">{judgeResult.processing_time_ms}ms</span>
                                         </div>
 
-                                        {/* Per-Model Detailed Analysis */}
-                                        {judgeResult.model_analyses && judgeResult.model_analyses.length > 0 && (
-                                            <div className="space-y-2">
-                                                <div className="flex items-center gap-2 px-1">
-                                                    <Search className="w-4 h-4 text-slate-500" />
-                                                    <span className="text-sm font-medium text-slate-700">Phân tích chi tiết từng model</span>
-                                                </div>
-
-                                                {judgeResult.model_analyses.map((analysis) => {
-                                                    const isWinnerModel = judgeResult.winner === analysis.model;
-                                                    const ranking = judgeResult.rankings.find(r => r.model === analysis.model);
-                                                    const criteria = [
-                                                        { label: 'Trôi chảy', score: analysis.fluency_score, color: 'bg-blue-500' },
-                                                        { label: 'Mạch lạc', score: analysis.coherence_score, color: 'bg-emerald-500' },
-                                                        { label: 'Liên quan', score: analysis.relevance_score, color: 'bg-violet-500' },
-                                                        { label: 'Nhất quán', score: analysis.consistency_score, color: 'bg-orange-500' },
-                                                    ];
-
-                                                    return (
-                                                        <div key={analysis.model} className={`border rounded-lg overflow-hidden ${isWinnerModel ? 'border-amber-300' : 'border-slate-200'}`}>
-                                                            {/* Header */}
-                                                            <div className={`px-3 py-2 flex items-center justify-between ${isWinnerModel ? 'bg-amber-50' : 'bg-slate-50'}`}>
-                                                                <div className="flex items-center gap-2">
-                                                                    {isWinnerModel && <Trophy className="w-3.5 h-3.5 text-amber-500" />}
-                                                                    <span className="font-medium text-sm text-slate-800">{getModelName(analysis.model)}</span>
-                                                                    {ranking && <span className={`text-xs font-bold px-1.5 py-0.5 rounded ${isWinnerModel ? 'bg-amber-200 text-amber-800' : 'bg-slate-200 text-slate-600'}`}>#{ranking.rank} · {ranking.score}đ</span>}
-                                                                </div>
-                                                            </div>
-
-                                                            <div className="p-3 space-y-2.5">
-                                                                {/* Criteria Scores */}
-                                                                <div className="grid grid-cols-4 gap-1.5">
-                                                                    {criteria.map((c) => (
-                                                                        <div key={c.label} className="text-center">
-                                                                            <div className="text-xs text-slate-500 mb-1">{c.label}</div>
-                                                                            <div className="w-full bg-slate-100 rounded-full h-1.5 mb-0.5">
-                                                                                <div className={`${c.color} h-1.5 rounded-full transition-all`} style={{ width: `${c.score}%` }} />
-                                                                            </div>
-                                                                            <div className="text-xs font-semibold text-slate-700">{c.score}</div>
-                                                                        </div>
-                                                                    ))}
-                                                                </div>
-
-                                                                {/* Strengths */}
-                                                                {analysis.strengths && analysis.strengths.length > 0 && (
-                                                                    <div>
-                                                                        <div className="text-xs font-medium text-emerald-700 mb-1">✅ Điểm mạnh</div>
-                                                                        <ul className="space-y-0.5">
-                                                                            {analysis.strengths.map((s, i) => (
-                                                                                <li key={i} className="text-xs text-slate-600 pl-3 relative before:content-['•'] before:absolute before:left-0 before:text-emerald-500">{s}</li>
-                                                                            ))}
-                                                                        </ul>
-                                                                    </div>
-                                                                )}
-
-                                                                {/* Weaknesses */}
-                                                                {analysis.weaknesses && analysis.weaknesses.length > 0 && (
-                                                                    <div>
-                                                                        <div className="text-xs font-medium text-orange-700 mb-1">⚠️ Điểm yếu</div>
-                                                                        <ul className="space-y-0.5">
-                                                                            {analysis.weaknesses.map((w, i) => (
-                                                                                <li key={i} className="text-xs text-slate-600 pl-3 relative before:content-['•'] before:absolute before:left-0 before:text-orange-500">{w}</li>
-                                                                            ))}
-                                                                        </ul>
-                                                                    </div>
-                                                                )}
-
-                                                                {/* Missing Points */}
-                                                                {analysis.missing_points && analysis.missing_points.length > 0 && (
-                                                                    <div className="bg-red-50 rounded p-2">
-                                                                        <div className="text-xs font-medium text-red-700 mb-1">❌ Ý quan trọng bị thiếu</div>
-                                                                        <ul className="space-y-0.5">
-                                                                            {analysis.missing_points.map((m, i) => (
-                                                                                <li key={i} className="text-xs text-red-600 pl-3 relative before:content-['•'] before:absolute before:left-0">{m}</li>
-                                                                            ))}
-                                                                        </ul>
-                                                                    </div>
-                                                                )}
-
-                                                                {/* Incorrect Points */}
-                                                                {analysis.incorrect_points && analysis.incorrect_points.length > 0 && (
-                                                                    <div className="bg-yellow-50 rounded p-2">
-                                                                        <div className="text-xs font-medium text-yellow-800 mb-1">🔴 Thông tin sai/bóp méo</div>
-                                                                        <ul className="space-y-0.5">
-                                                                            {analysis.incorrect_points.map((ic, i) => (
-                                                                                <li key={i} className="text-xs text-yellow-700 pl-3 relative before:content-['•'] before:absolute before:left-0">{ic}</li>
-                                                                            ))}
-                                                                        </ul>
-                                                                    </div>
-                                                                )}
-                                                            </div>
+                                        {/* Rankings */}
+                                        <div className="space-y-2 mb-4">
+                                            {judgeResult.rankings.map((r) => {
+                                                const style = RANK_STYLES[r.rank] || RANK_STYLES[3];
+                                                return (
+                                                    <div key={r.model} className={`flex items-center gap-3 p-3 rounded-lg border ${style.border} ${style.bg}`}>
+                                                        <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${style.badge}`}>
+                                                            {r.rank}
                                                         </div>
-                                                    );
-                                                })}
+                                                        <div className="flex-1 min-w-0">
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="text-sm font-medium text-slate-800">{getModelName(r.model)}</span>
+                                                                {r.rank === 1 && <Trophy className="w-3.5 h-3.5 text-amber-500" />}
+                                                            </div>
+                                                            <p className="text-xs text-slate-500 mt-0.5">{r.reasoning}</p>
+                                                        </div>
+                                                        <div className={`text-lg font-bold tabular-nums ${style.score}`}>{r.score}<span className="text-xs font-normal text-slate-400">/100</span></div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+
+                                        {/* Overall Analysis */}
+                                        <p className="text-[13px] text-slate-600 leading-relaxed mb-4">
+                                            {judgeResult.detailed_analysis}
+                                        </p>
+
+                                        {/* Divider */}
+                                        <div className="border-t border-slate-100 mb-3" />
+
+                                        {/* Per-Model Detail - Accordion */}
+                                        {judgeResult.model_analyses && judgeResult.model_analyses.length > 0 && (
+                                            <div>
+                                                <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Chi tiết từng model</h4>
+                                                <div className="space-y-1.5">
+                                                    {judgeResult.model_analyses.map((analysis) => {
+                                                        const ranking = judgeResult.rankings.find(r => r.model === analysis.model);
+                                                        const isExpanded = expandedModels.has(analysis.model);
+                                                        const criteria = [
+                                                            { label: 'Trôi chảy', score: analysis.fluency_score },
+                                                            { label: 'Mạch lạc', score: analysis.coherence_score },
+                                                            { label: 'Liên quan', score: analysis.relevance_score },
+                                                            { label: 'Nhất quán', score: analysis.consistency_score },
+                                                        ];
+
+                                                        const hasIssues = (analysis.missing_points?.length > 0) || (analysis.incorrect_points?.length > 0);
+
+                                                        return (
+                                                            <div key={analysis.model} className="border border-slate-200 rounded-lg overflow-hidden">
+                                                                <button
+                                                                    onClick={() => toggleExpand(analysis.model)}
+                                                                    className="w-full px-3 py-2.5 flex items-center gap-3 hover:bg-slate-50 transition-colors"
+                                                                >
+                                                                    <span className="text-sm font-medium text-slate-700 flex-1 text-left">{getModelName(analysis.model)}</span>
+
+                                                                    {/* Mini score chips */}
+                                                                    <div className="hidden sm:flex items-center gap-1">
+                                                                        {criteria.map((c) => (
+                                                                            <span key={c.label} className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${
+                                                                                c.score >= 90 ? 'bg-emerald-50 text-emerald-700' :
+                                                                                c.score >= 70 ? 'bg-slate-100 text-slate-600' :
+                                                                                'bg-red-50 text-red-600'
+                                                                            }`}>{c.score}</span>
+                                                                        ))}
+                                                                    </div>
+
+                                                                    {ranking && (
+                                                                        <span className="text-xs font-semibold text-slate-500">{ranking.score}đ</span>
+                                                                    )}
+                                                                    {isExpanded ? <ChevronUp className="w-3.5 h-3.5 text-slate-400" /> : <ChevronDown className="w-3.5 h-3.5 text-slate-400" />}
+                                                                </button>
+
+                                                                {isExpanded && (
+                                                                    <div className="px-3 pb-3 border-t border-slate-100">
+                                                                        {/* Score breakdown */}
+                                                                        <div className="grid grid-cols-4 gap-3 py-3">
+                                                                            {criteria.map((c) => (
+                                                                                <div key={c.label}>
+                                                                                    <div className="flex items-center justify-between mb-1">
+                                                                                        <span className="text-[11px] text-slate-500">{c.label}</span>
+                                                                                        <span className="text-[11px] font-semibold text-slate-700">{c.score}</span>
+                                                                                    </div>
+                                                                                    <div className="w-full bg-slate-100 rounded-full h-1">
+                                                                                        <div
+                                                                                            className={`h-1 rounded-full transition-all duration-500 ${
+                                                                                                c.score >= 90 ? 'bg-emerald-500' :
+                                                                                                c.score >= 70 ? 'bg-slate-400' :
+                                                                                                'bg-red-400'
+                                                                                            }`}
+                                                                                            style={{ width: `${c.score}%` }}
+                                                                                        />
+                                                                                    </div>
+                                                                                </div>
+                                                                            ))}
+                                                                        </div>
+
+                                                                        {/* Strengths */}
+                                                                        {analysis.strengths?.length > 0 && (
+                                                                            <div className="mb-2">
+                                                                                <h5 className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-1">Điểm mạnh</h5>
+                                                                                <ul className="space-y-0.5">
+                                                                                    {analysis.strengths.map((s, i) => (
+                                                                                        <li key={i} className="text-xs text-slate-600 flex gap-2">
+                                                                                            <span className="text-emerald-400 mt-0.5 shrink-0">+</span>
+                                                                                            <span>{s}</span>
+                                                                                        </li>
+                                                                                    ))}
+                                                                                </ul>
+                                                                            </div>
+                                                                        )}
+
+                                                                        {/* Weaknesses */}
+                                                                        {analysis.weaknesses?.length > 0 && (
+                                                                            <div className="mb-2">
+                                                                                <h5 className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-1">Điểm yếu</h5>
+                                                                                <ul className="space-y-0.5">
+                                                                                    {analysis.weaknesses.map((w, i) => (
+                                                                                        <li key={i} className="text-xs text-slate-600 flex gap-2">
+                                                                                            <span className="text-orange-400 mt-0.5 shrink-0">−</span>
+                                                                                            <span>{w}</span>
+                                                                                        </li>
+                                                                                    ))}
+                                                                                </ul>
+                                                                            </div>
+                                                                        )}
+
+                                                                        {/* Missing & Incorrect - grouped */}
+                                                                        {hasIssues && (
+                                                                            <div className="bg-slate-50 rounded-md p-2.5 mt-1 space-y-2">
+                                                                                {analysis.missing_points?.length > 0 && (
+                                                                                    <div>
+                                                                                        <h5 className="text-[11px] font-semibold text-red-500 mb-1">Ý quan trọng bị thiếu</h5>
+                                                                                        <ul className="space-y-0.5">
+                                                                                            {analysis.missing_points.map((m, i) => (
+                                                                                                <li key={i} className="text-xs text-slate-600 pl-3 relative before:content-['–'] before:absolute before:left-0 before:text-red-400">{m}</li>
+                                                                                            ))}
+                                                                                        </ul>
+                                                                                    </div>
+                                                                                )}
+                                                                                {analysis.incorrect_points?.length > 0 && (
+                                                                                    <div>
+                                                                                        <h5 className="text-[11px] font-semibold text-red-500 mb-1">Thông tin sai/bóp méo</h5>
+                                                                                        <ul className="space-y-0.5">
+                                                                                            {analysis.incorrect_points.map((ic, i) => (
+                                                                                                <li key={i} className="text-xs text-slate-600 pl-3 relative before:content-['–'] before:absolute before:left-0 before:text-red-400">{ic}</li>
+                                                                                            ))}
+                                                                                        </ul>
+                                                                                    </div>
+                                                                                )}
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
                                             </div>
                                         )}
                                     </div>
