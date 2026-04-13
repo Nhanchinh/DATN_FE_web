@@ -18,8 +18,6 @@ import { Button } from '@/components/common';
 import { summarizeService, historyService, evaluationService } from '@/services';
 
 const MODEL_OPTIONS = [
-    { value: 'phobert_vit5', label: 'PhoBERT + ViT5', tag: 'Best' },
-    { value: 'vit5', label: 'ViT5', tag: 'Fast' },
     { value: 'vit5_fin', label: 'ViT5 Financial v2', tag: 'Finance' },
     { value: 'qwen', label: 'Qwen 2.5-7B', tag: 'LLM' },
     { value: 'phobert_finance', label: 'PhoBERT Finance', tag: 'Extractive' },
@@ -41,7 +39,7 @@ const ScoreBar = ({ label, value, color = 'bg-blue-500' }) => (
 );
 
 const Playground = () => {
-    const [model, setModel] = useState('phobert_vit5');
+    const [model, setModel] = useState('vit5_fin');
     const [input, setInput] = useState('');
     const [output, setOutput] = useState('');
     const [isLoading, setIsLoading] = useState(false);

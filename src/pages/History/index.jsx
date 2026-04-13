@@ -368,11 +368,12 @@ const History = () => {
 
     // Model badge colors
     const modelColors = {
-        vit5: 'bg-blue-100 text-blue-700',
-        phobert_vit5: 'bg-purple-100 text-purple-700',
         vit5_fin: 'bg-teal-100 text-teal-700',
         qwen: 'bg-orange-100 text-orange-700',
-        phobert_finance: 'bg-rose-100 text-rose-700'
+        phobert_finance: 'bg-rose-100 text-rose-700',
+        vit5: 'bg-slate-100 text-slate-500',
+        phobert_vit5: 'bg-slate-100 text-slate-500',
+        phobert_vit5_paraphrase: 'bg-slate-100 text-slate-500',
     };
 
     // Rating badge colors
@@ -463,8 +464,6 @@ const History = () => {
                         className="border border-slate-200 rounded-lg px-3 py-2 text-sm"
                     >
                         <option value="">Tất cả Model</option>
-                        <option value="vit5">ViT5</option>
-                        <option value="phobert_vit5">PhoBERT + ViT5</option>
                         <option value="vit5_fin">ViT5 Financial v2</option>
                         <option value="qwen">Qwen</option>
                         <option value="phobert_finance">PhoBERT Finance</option>

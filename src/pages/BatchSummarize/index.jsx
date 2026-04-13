@@ -21,8 +21,6 @@ import {
 import { Button } from '@/components/common';
 
 const MODEL_OPTIONS = [
-    { value: 'phobert_vit5', label: 'PhoBERT + ViT5', tag: 'Best', color: 'bg-purple-100 text-purple-700' },
-    { value: 'vit5', label: 'ViT5', tag: 'Fast', color: 'bg-blue-100 text-blue-700' },
     { value: 'vit5_fin', label: 'ViT5 Financial v2', tag: 'Finance', color: 'bg-teal-100 text-teal-700' },
     { value: 'qwen', label: 'Qwen 2.5-7B', tag: 'LLM', color: 'bg-orange-100 text-orange-700' },
     { value: 'phobert_finance', label: 'PhoBERT Finance', tag: 'Extractive', color: 'bg-rose-100 text-rose-700' },
@@ -37,7 +35,7 @@ const BatchSummarize = () => {
     const [error, setError] = useState('');
 
     // Config
-    const [model, setModel] = useState('vit5');
+    const [model, setModel] = useState('vit5_fin');
     const [maxLength, setMaxLength] = useState(256);
 
     // Progress & Results
@@ -327,7 +325,7 @@ const BatchSummarize = () => {
                         <div className="mt-4 p-3 bg-white/60 rounded-xl border border-blue-100">
                             <p className="text-xs text-blue-700">
                                 <strong>⚠️ Lưu ý:</strong> Thời gian xử lý phụ thuộc số bài và model.
-                                Model LLM (Qwen) sẽ chậm hơn các model ViT5.
+                                Model LLM (Qwen) sẽ chậm hơn các model khác.
                             </p>
                         </div>
                     </div>

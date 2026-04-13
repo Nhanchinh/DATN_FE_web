@@ -8,10 +8,10 @@ const summarizeService = {
     /**
      * Tóm tắt văn bản với model được chỉ định
      * @param {string} text - Văn bản cần tóm tắt
-     * @param {string} model - Model: 'vit5' | 'phobert_vit5' | 'vit5_fin' | 'qwen' | 'phobert_finance'
+     * @param {string} model - Model: 'vit5_fin' | 'qwen' | 'phobert_finance'
      * @param {number} maxLength - Độ dài tối đa (50-512)
      */
-    summarize: (text, model = 'vit5', maxLength = 256) =>
+    summarize: (text, model = 'vit5_fin', maxLength = 256) =>
         api.post('/summarization/summarize', {
             text,
             model,
@@ -29,10 +29,10 @@ const summarizeService = {
     /**
      * So sánh kết quả từ nhiều models
      * @param {string} text - Văn bản cần tóm tắt
-     * @param {Array<string>} models - Danh sách models (mặc định: ['vit5', 'phobert_vit5', 'vit5_fin', 'qwen', 'phobert_finance'])
+     * @param {Array<string>} models - Danh sách models (mặc định: ['vit5_fin', 'qwen', 'phobert_finance'])
      * @param {number} maxLength - Độ dài tối đa (50-512)
      */
-    compareModels: (text, models = ['vit5', 'phobert_vit5', 'vit5_fin', 'qwen', 'phobert_finance'], maxLength = 256) =>
+    compareModels: (text, models = ['vit5_fin', 'qwen', 'phobert_finance'], maxLength = 256) =>
         api.post('/summarization/compare', {
             text,
             models,
@@ -40,7 +40,7 @@ const summarizeService = {
         }),
 
     // Batch upload - upload file CSV/Excel để đánh giá dataset
-    batchUpload: (file, model = 'vit5', maxLength = 256, textColumn = 'text', referenceColumn = null) => {
+    batchUpload: (file, model = 'vit5_fin', maxLength = 256, textColumn = 'text', referenceColumn = null) => {
         const formData = new FormData();
         formData.append('file', file);
         formData.append('model', model);
