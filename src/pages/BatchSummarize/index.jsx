@@ -25,6 +25,7 @@ const MODEL_OPTIONS = [
     { value: 'vit5', label: 'ViT5', tag: 'Fast', color: 'bg-blue-100 text-blue-700' },
     { value: 'vit5_fin', label: 'ViT5 Financial v2', tag: 'Finance', color: 'bg-teal-100 text-teal-700' },
     { value: 'qwen', label: 'Qwen 2.5-7B', tag: 'LLM', color: 'bg-orange-100 text-orange-700' },
+    { value: 'phobert_finance', label: 'PhoBERT Finance', tag: 'Extractive', color: 'bg-rose-100 text-rose-700' },
 ];
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';

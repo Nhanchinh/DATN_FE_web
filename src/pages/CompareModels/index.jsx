@@ -7,7 +7,8 @@ const MODEL_OPTIONS = [
     { id: 'vit5', name: 'ViT5', tag: 'Fast' },
     { id: 'phobert_vit5', name: 'PhoBERT + ViT5', tag: 'Best' },
     { id: 'vit5_fin', name: 'ViT5 Financial v2', tag: 'Finance' },
-    { id: 'qwen', name: 'Qwen 7B', tag: 'LLM' }
+    { id: 'qwen', name: 'Qwen 7B', tag: 'LLM' },
+    { id: 'phobert_finance', name: 'PhoBERT Finance', tag: 'Extractive' }
 ];
 
 const CompareModels = () => {
@@ -15,7 +16,7 @@ const CompareModels = () => {
     const [loading, setLoading] = useState(false);
     const [results, setResults] = useState(null);
     const [error, setError] = useState('');
-    const [selectedModels, setSelectedModels] = useState(['vit5', 'phobert_vit5', 'vit5_fin', 'qwen']);
+    const [selectedModels, setSelectedModels] = useState(['vit5', 'phobert_vit5', 'vit5_fin', 'qwen', 'phobert_finance']);
 
     // AI Judge state
     const [judging, setJudging] = useState(false);
