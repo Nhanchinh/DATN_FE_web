@@ -56,7 +56,7 @@ const BatchSummarize = () => {
 
     // ============ Download Template ============
     const handleDownloadTemplate = () => {
-        const csvContent = "\uFEFFcontent\n\"Nhập văn bản cần tóm tắt ở đây...\"\n\"Văn bản thứ hai cần tóm tắt...\"\n\"Mỗi dòng trong cột content sẽ được tóm tắt tự động bằng model bạn chọn.\"";
+        const csvContent = "\uFEFFcontent,reference\n\"Nhập văn bản cần tóm tắt ở đây...\",\"Mô tả kỳ vọng/tóm tắt chuẩn để đánh giá\"\n\"Văn bản thứ hai cần tóm tắt...\",\"Reference cho dòng thứ hai\"\n\"Mỗi dòng trong cột content sẽ được tóm tắt tự động bằng model bạn chọn.\",\"Cột reference là tùy chọn nhưng nên có nếu dùng BatchEval\"";
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
@@ -195,10 +195,11 @@ const BatchSummarize = () => {
     const handleExportCSV = () => {
         if (results.length === 0) return;
 
-        const headers = ['content', 'summary', 'model', 'inference_time_s'];
+        const headers = ['content', 'summary', 'reference', 'model', 'inference_time_s'];
         const rows = results.map((r, i) => [
             `"${(r.original_text || '').replace(/"/g, '""')}"`,
             `"${(r.summary || '').replace(/"/g, '""')}"`,
+            `"${(r.reference || '').replace(/"/g, '""')}"`,
             model,
             r.inference_time_s || 0,
         ].join(','));
