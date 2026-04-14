@@ -1,14 +1,11 @@
 import { useState, useEffect } from 'react';
 import { summarizeService } from '@/services';
 import { Wifi, WifiOff, Cpu, Info, RefreshCw } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
-/**
- * ServerStatus Component
- * Hiển thị trạng thái kết nối đến AI Server (Colab)
- * Check thủ công khi click
- */
 const ServerStatus = () => {
-    const [status, setStatus] = useState('checking'); // checking, connected, disconnected
+    const { t } = useTranslation();
+    const [status, setStatus] = useState('checking');
     const [gpuInfo, setGpuInfo] = useState(null);
     const [lastCheck, setLastCheck] = useState(null);
     const [isChecking, setIsChecking] = useState(false);
@@ -37,31 +34,29 @@ const ServerStatus = () => {
     };
 
     useEffect(() => {
-        // Initial check only
         checkStatus();
     }, []);
 
-    // Render logic
     const getStatusColor = () => {
         switch (status) {
             case 'connected': return 'bg-emerald-500';
             case 'disconnected': return 'bg-red-500';
-            default: return 'bg-amber-500'; // checking
+            default: return 'bg-amber-500';
         }
     };
 
     const getStatusText = () => {
-        if (status === 'checking') return 'Checking...';
+        if (status === 'checking') return t('server.checking');
         switch (status) {
-            case 'connected': return 'AI Server Online';
-            case 'disconnected': return 'AI Server Offline';
-            default: return 'Checking Server...';
+            case 'connected': return t('server.connected');
+            case 'disconnected': return t('server.disconnected');
+            default: return t('server.checking');
         }
     };
 
     const getGpuText = () => {
-        if (!gpuInfo) return 'GPU Info Unavailable';
-        return `GPU: ${typeof gpuInfo === 'string' ? gpuInfo : 'Available'}`;
+        if (!gpuInfo) return t('server.noGpuInfo');
+        return `GPU: ${typeof gpuInfo === 'string' ? gpuInfo : t('server.gpuAvailable')}`;
     };
 
     return (
@@ -69,7 +64,7 @@ const ServerStatus = () => {
             <div
                 onClick={checkStatus}
                 className="flex items-center justify-between group cursor-pointer hover:bg-slate-800/50 p-2 rounded-lg transition-colors"
-                title="Click to check connection"
+                title={t('server.clickToCheck')}
             >
                 <div className="flex items-center gap-3">
                     <div className="relative flex h-3 w-3">
@@ -91,7 +86,6 @@ const ServerStatus = () => {
                     </div>
                 </div>
 
-                {/* Status Icon */}
                 <div>
                     {isChecking ? (
                         <RefreshCw className="w-4 h-4 text-amber-500 animate-spin" />
@@ -103,10 +97,9 @@ const ServerStatus = () => {
                 </div>
             </div>
 
-            {/* Last checked text */}
             {lastCheck && (
                 <div className="text-[10px] text-slate-600 px-2 mt-1 flex justify-between">
-                    <span>Click to refresh</span>
+                    <span>{t('server.clickToRefresh')}</span>
                     <span>{lastCheck.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                 </div>
             )}

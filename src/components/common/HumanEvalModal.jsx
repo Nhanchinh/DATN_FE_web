@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { X, Star, MessageSquare, ThumbsUp, ThumbsDown, FileText, Save } from 'lucide-react';
 import Button from './Button';
+import { useTranslation } from 'react-i18next';
 
 const HumanEvalModal = ({ isOpen, onClose, onSubmit, historyItem }) => {
+    const { t } = useTranslation();
     const [scores, setScores] = useState({
         fluency: null,
         coherence: null,
@@ -26,7 +28,6 @@ const HumanEvalModal = ({ isOpen, onClose, onSubmit, historyItem }) => {
             consistency: scores.consistency
         };
 
-        // Tính average score để auto-set rating
         let finalRating = rating;
         const validScores = Object.values(scores).filter(s => s !== null);
         if (validScores.length > 0) {
@@ -42,7 +43,6 @@ const HumanEvalModal = ({ isOpen, onClose, onSubmit, historyItem }) => {
             human_eval: humanEval
         });
 
-        // Reset form
         setScores({ fluency: null, coherence: null, relevance: null, consistency: null });
         setComment('');
         setRating('neutral');
@@ -52,26 +52,10 @@ const HumanEvalModal = ({ isOpen, onClose, onSubmit, historyItem }) => {
     const isValid = Object.values(scores).some(s => s !== null);
 
     const criteriaData = [
-        {
-            key: 'fluency',
-            label: 'Fluency',
-            desc: 'Văn phong tự nhiên, không lỗi ngữ pháp'
-        },
-        {
-            key: 'coherence',
-            label: 'Coherence',
-            desc: 'Các ý kết nối chặt chẽ, logic rõ ràng'
-        },
-        {
-            key: 'relevance',
-            label: 'Relevance',
-            desc: 'Nội dung đúng trọng tâm, không thừa'
-        },
-        {
-            key: 'consistency',
-            label: 'Consistency',
-            desc: 'Không mâu thuẫn, thông tin chính xác'
-        }
+        { key: 'fluency', label: t('humanEval.fluency'), desc: t('humanEval.fluencyDesc') },
+        { key: 'coherence', label: t('humanEval.coherence'), desc: t('humanEval.coherenceDesc') },
+        { key: 'relevance', label: t('humanEval.relevance'), desc: t('humanEval.relevanceDesc') },
+        { key: 'consistency', label: t('humanEval.consistency'), desc: t('humanEval.consistencyDesc') }
     ];
 
     return (
@@ -82,9 +66,9 @@ const HumanEvalModal = ({ isOpen, onClose, onSubmit, historyItem }) => {
                     <div>
                         <h2 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
                             <Star className="w-5 h-5 text-slate-600" />
-                            Human Evaluation
+                            {t('humanEval.title')}
                         </h2>
-                        <p className="text-sm text-slate-500 mt-0.5">Đánh giá chất lượng tóm tắt</p>
+                        <p className="text-sm text-slate-500 mt-0.5">{t('humanEval.subtitle')}</p>
                     </div>
                     <button
                         onClick={onClose}
@@ -100,7 +84,7 @@ const HumanEvalModal = ({ isOpen, onClose, onSubmit, historyItem }) => {
                         <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
                             <div className="flex items-center gap-2 text-sm font-medium text-slate-600 mb-2">
                                 <FileText className="w-4 h-4" />
-                                Summary đang đánh giá
+                                {t('humanEval.summaryReview')}
                             </div>
                             <p className="text-slate-800 text-sm leading-relaxed line-clamp-3">{historyItem.summary}</p>
                         </div>
@@ -108,7 +92,7 @@ const HumanEvalModal = ({ isOpen, onClose, onSubmit, historyItem }) => {
 
                     {/* Evaluation Criteria */}
                     <div>
-                        <h3 className="text-sm font-medium text-slate-700 mb-3">Tiêu chí đánh giá (1-5 điểm)</h3>
+                        <h3 className="text-sm font-medium text-slate-700 mb-3">{t('humanEval.criteria')}</h3>
                         <div className="space-y-3">
                             {criteriaData.map(({ key, label, desc }) => (
                                 <div key={key} className="bg-white border border-slate-200 rounded-lg p-4">
@@ -141,7 +125,7 @@ const HumanEvalModal = ({ isOpen, onClose, onSubmit, historyItem }) => {
                                                 onClick={() => handleScoreChange(key, null)}
                                                 className="ml-2 px-2 py-1 text-xs text-slate-500 hover:text-red-600 rounded transition-colors"
                                             >
-                                                Clear
+                                                {t('humanEval.clear')}
                                             </button>
                                         )}
                                     </div>
@@ -152,7 +136,7 @@ const HumanEvalModal = ({ isOpen, onClose, onSubmit, historyItem }) => {
 
                     {/* Overall Rating */}
                     <div>
-                        <h3 className="text-sm font-medium text-slate-700 mb-3">Đánh giá tổng quan</h3>
+                        <h3 className="text-sm font-medium text-slate-700 mb-3">{t('humanEval.overallRating')}</h3>
                         <div className="flex gap-3">
                             <button
                                 onClick={() => setRating('good')}
@@ -162,7 +146,7 @@ const HumanEvalModal = ({ isOpen, onClose, onSubmit, historyItem }) => {
                                     }`}
                             >
                                 <ThumbsUp className="w-4 h-4" />
-                                Tốt
+                                {t('common.good')}
                             </button>
                             <button
                                 onClick={() => setRating('neutral')}
@@ -171,7 +155,7 @@ const HumanEvalModal = ({ isOpen, onClose, onSubmit, historyItem }) => {
                                         : 'bg-white text-slate-700 border-slate-200 hover:border-slate-400 hover:bg-slate-50'
                                     }`}
                             >
-                                Trung bình
+                                {t('common.neutral')}
                             </button>
                             <button
                                 onClick={() => setRating('bad')}
@@ -181,7 +165,7 @@ const HumanEvalModal = ({ isOpen, onClose, onSubmit, historyItem }) => {
                                     }`}
                             >
                                 <ThumbsDown className="w-4 h-4" />
-                                Tệ
+                                {t('common.bad')}
                             </button>
                         </div>
                     </div>
@@ -189,12 +173,12 @@ const HumanEvalModal = ({ isOpen, onClose, onSubmit, historyItem }) => {
                     {/* Comment */}
                     <div>
                         <label className="block text-sm font-medium text-slate-700 mb-2">
-                            Nhận xét (tuỳ chọn)
+                            {t('humanEval.commentLabel')}
                         </label>
                         <textarea
                             value={comment}
                             onChange={(e) => setComment(e.target.value)}
-                            placeholder="Ghi chú thêm về bản tóm tắt này..."
+                            placeholder={t('humanEval.commentPlaceholder')}
                             className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none text-sm"
                             rows={3}
                             maxLength={500}
@@ -212,7 +196,7 @@ const HumanEvalModal = ({ isOpen, onClose, onSubmit, historyItem }) => {
                         onClick={onClose}
                         className="flex-1"
                     >
-                        Hủy
+                        {t('common.cancel')}
                     </Button>
                     <Button
                         onClick={handleSubmit}
@@ -220,7 +204,7 @@ const HumanEvalModal = ({ isOpen, onClose, onSubmit, historyItem }) => {
                         className="flex-1 bg-blue-600 hover:bg-blue-700 text-white gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         <Save className="w-4 h-4" />
-                        Lưu đánh giá
+                        {t('humanEval.saveEval')}
                     </Button>
                 </div>
             </div>

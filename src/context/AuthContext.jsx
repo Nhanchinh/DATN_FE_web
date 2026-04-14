@@ -76,7 +76,7 @@ export const AuthProvider = ({ children }) => {
         } catch (error) {
             const errorMessage = error.response?.data?.detail ||
                 error.response?.data?.message ||
-                'Đăng nhập thất bại';
+                'Login failed';
             return {
                 success: false,
                 error: errorMessage
@@ -111,7 +111,7 @@ export const AuthProvider = ({ children }) => {
         } catch (error) {
             const errorMessage = error.response?.data?.detail ||
                 error.response?.data?.message ||
-                'Đăng ký thất bại';
+                'Registration failed';
             return {
                 success: false,
                 error: errorMessage

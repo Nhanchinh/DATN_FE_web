@@ -16,11 +16,12 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/common';
 import { summarizeService, historyService, evaluationService } from '@/services';
+import { useTranslation } from 'react-i18next';
 
 const MODEL_OPTIONS = [
-    { value: 'vit5_fin', label: 'ViT5 Financial v2', tag: 'Finance' },
-    { value: 'qwen', label: 'Qwen 2.5-7B', tag: 'LLM' },
-    { value: 'phobert_finance', label: 'PhoBERT Finance', tag: 'Extractive' },
+    { value: 'vit5_fin', label: 'ViT5 Financial v2', tagKey: 'modelTags.financial' },
+    { value: 'qwen', label: 'Qwen 2.5-7B', tagKey: 'modelTags.llm' },
+    { value: 'phobert_finance', label: 'PhoBERT Finance', tagKey: 'modelTags.extractive' },
 ];
 
 const ScoreBar = ({ label, value, color = 'bg-blue-500' }) => (
@@ -39,6 +40,7 @@ const ScoreBar = ({ label, value, color = 'bg-blue-500' }) => (
 );
 
 const Playground = () => {
+    const { t } = useTranslation();
     const [model, setModel] = useState('vit5_fin');
     const [input, setInput] = useState('');
     const [output, setOutput] = useState('');
@@ -48,7 +50,6 @@ const Playground = () => {
     const [copied, setCopied] = useState(false);
     const [elapsedTime, setElapsedTime] = useState(0);
 
-    // Evaluation state
     const [showEval, setShowEval] = useState(false);
     const [reference, setReference] = useState('');
     const [evalLoading, setEvalLoading] = useState(false);
@@ -124,10 +125,10 @@ const Playground = () => {
             clearInterval(timerRef.current);
 
             if (err.name === 'CanceledError' || err.message === 'canceled') {
-                setError('Đã hủy yêu cầu');
+                setError(t('common.cancelled'));
             } else {
                 console.error('Summarization error:', err);
-                setError(err.response?.data?.detail || err.message || 'Đã xảy ra lỗi');
+                setError(err.response?.data?.detail || err.message || t('common.error'));
             }
         } finally {
             setIsLoading(false);
@@ -161,7 +162,6 @@ const Playground = () => {
         setEvalError('');
     };
 
-    // Generate reference summary using Gemini
     const handleGenerateReference = async () => {
         if (!input.trim()) return;
 
@@ -173,16 +173,15 @@ const Playground = () => {
             setReference(response.reference_summary);
         } catch (err) {
             console.error('Generate reference error:', err);
-            setEvalError(err.response?.data?.detail || 'Lỗi sinh tóm tắt gold. Kiểm tra GEMINI_API_KEY.');
+            setEvalError(err.response?.data?.detail || t('playground.genRefError'));
         } finally {
             setGenRefLoading(false);
         }
     };
 
-    // Evaluate summary against reference
     const handleEvaluate = async () => {
         if (!output.trim() || !reference.trim()) {
-            setEvalError('Cần có bản tóm tắt và bản tham chiếu để đánh giá');
+            setEvalError(t('playground.needRefAndSummary'));
             return;
         }
 
@@ -195,7 +194,7 @@ const Playground = () => {
             setEvalResult(response);
         } catch (err) {
             console.error('Evaluation error:', err);
-            setEvalError(err.response?.data?.detail || 'Lỗi đánh giá');
+            setEvalError(err.response?.data?.detail || t('playground.evalError'));
         } finally {
             setEvalLoading(false);
         }
@@ -225,7 +224,7 @@ const Playground = () => {
                     </div>
                     {selectedModel && (
                         <span className="text-xs text-slate-500 bg-slate-100 px-2 py-1 rounded">
-                            {selectedModel.tag}
+                            {t(selectedModel.tagKey)}
                         </span>
                     )}
                 </div>
@@ -249,7 +248,7 @@ const Playground = () => {
                             onClick={handleCancel}
                         >
                             <Square className="w-3.5 h-3.5" />
-                            Hủy
+                            {t('common.cancel')}
                         </Button>
                     ) : (
                         <Button
@@ -259,7 +258,7 @@ const Playground = () => {
                             disabled={!input.trim()}
                         >
                             <Play className="w-3.5 h-3.5" />
-                            Tóm tắt
+                            {t('common.summarize')}
                         </Button>
                     )}
                 </div>
@@ -279,17 +278,17 @@ const Playground = () => {
                 <div className="flex flex-col bg-white rounded-lg border border-slate-200 overflow-hidden">
                     <div className="p-3 border-b border-slate-100 bg-blue-50 flex items-center gap-2">
                         <FileText className="w-4 h-4 text-blue-600" />
-                        <span className="text-sm font-medium text-slate-700">Văn bản gốc</span>
+                        <span className="text-sm font-medium text-slate-700">{t('playground.originalText')}</span>
                     </div>
                     <textarea
                         className="flex-1 p-4 resize-none focus:outline-none text-slate-700 text-sm leading-relaxed"
-                        placeholder="Dán văn bản tiếng Việt cần tóm tắt..."
+                        placeholder={t('playground.placeholder')}
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
                         disabled={isLoading}
                     />
                     <div className="p-2 bg-slate-50 border-t border-slate-100 text-xs text-slate-500">
-                        {input.split(/\s+/).filter(w => w).length} từ • {input.length} ký tự
+                        {input.split(/\s+/).filter(w => w).length} {t('common.words')} • {input.length} {t('common.chars')}
                     </div>
                 </div>
 
@@ -298,7 +297,7 @@ const Playground = () => {
                     <div className="p-3 border-b border-slate-100 bg-emerald-50 flex items-center justify-between">
                         <div className="flex items-center gap-2">
                             <CheckCircle className="w-4 h-4 text-emerald-600" />
-                            <span className="text-sm font-medium text-slate-700">Bản tóm tắt</span>
+                            <span className="text-sm font-medium text-slate-700">{t('playground.summaryOutput')}</span>
                         </div>
                         <div className="flex items-center gap-1.5">
                             {output && (
@@ -308,15 +307,15 @@ const Playground = () => {
                                         onClick={handleCopy}
                                     >
                                         {copied ? <CheckCircle className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-                                        {copied ? 'Copied' : 'Copy'}
+                                        {copied ? t('common.copied') : t('common.copy')}
                                     </button>
                                     <button
                                         className={`p-1.5 rounded text-xs flex items-center gap-1 transition-colors ${showEval ? 'text-violet-600 bg-violet-50' : 'text-slate-500 hover:bg-slate-100'}`}
                                         onClick={() => setShowEval(!showEval)}
-                                        title="Đánh giá chất lượng"
+                                        title={t('playground.evaluateQuality')}
                                     >
                                         <BarChart3 className="w-3.5 h-3.5" />
-                                        {showEval ? <ChevronUp className="w-3 h-3" /> : 'Đánh giá'}
+                                        {showEval ? <ChevronUp className="w-3 h-3" /> : t('playground.evaluate')}
                                     </button>
                                 </>
                             )}
@@ -326,7 +325,7 @@ const Playground = () => {
                         {isLoading ? (
                             <div className="flex flex-col items-center justify-center h-full">
                                 <Loader2 className="w-6 h-6 text-slate-400 animate-spin mb-3" />
-                                <p className="text-sm text-slate-500">Đang xử lý...</p>
+                                <p className="text-sm text-slate-500">{t('common.processing')}</p>
                                 <p className="text-xs text-slate-400 mt-1">{elapsedTime}s</p>
                             </div>
                         ) : output ? (
@@ -334,13 +333,13 @@ const Playground = () => {
                         ) : (
                             <div className="flex flex-col items-center justify-center h-full text-slate-400">
                                 <FileText className="w-10 h-10 mb-2 opacity-50" />
-                                <p className="text-sm">Nhấn "Tóm tắt" để bắt đầu</p>
+                                <p className="text-sm">{t('playground.pressToStart')}</p>
                             </div>
                         )}
                     </div>
                     {output && (
                         <div className="p-2 bg-slate-50 border-t border-slate-100 text-xs text-slate-500">
-                            {metrics?.outputWords} từ • Giảm {metrics?.compression}%
+                            {metrics?.outputWords} {t('common.words')} • {t('playground.reduced')} {metrics?.compression}%
                             {metrics?.inferenceTime && ` • GPU: ${metrics.inferenceTime}`}
                         </div>
                     )}
@@ -352,7 +351,7 @@ const Playground = () => {
                         <div className="p-3 border-b border-violet-100 bg-violet-50 flex items-center justify-between">
                             <div className="flex items-center gap-2">
                                 <BarChart3 className="w-4 h-4 text-violet-600" />
-                                <span className="text-sm font-medium text-slate-700">Đánh giá chất lượng</span>
+                                <span className="text-sm font-medium text-slate-700">{t('playground.evaluateQuality')}</span>
                             </div>
                             <button
                                 className="p-1 hover:bg-violet-100 rounded text-slate-400 transition-colors"
@@ -366,24 +365,24 @@ const Playground = () => {
                             {/* Reference Input */}
                             <div>
                                 <div className="flex items-center justify-between mb-1.5">
-                                    <label className="text-xs font-medium text-slate-600">Tóm tắt tham chiếu (Gold)</label>
+                                    <label className="text-xs font-medium text-slate-600">{t('playground.refSummary')}</label>
                                     <button
                                         className="text-xs flex items-center gap-1 text-violet-600 hover:text-violet-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                                         onClick={handleGenerateReference}
                                         disabled={genRefLoading || !input.trim()}
-                                        title="Dùng AI (Gemini) để tự động sinh bản tóm tắt gold"
+                                        title={t('playground.aiGenTitle')}
                                     >
                                         {genRefLoading ? (
                                             <Loader2 className="w-3 h-3 animate-spin" />
                                         ) : (
                                             <Sparkles className="w-3 h-3" />
                                         )}
-                                        {genRefLoading ? 'Đang sinh...' : 'AI sinh tự động'}
+                                        {genRefLoading ? t('playground.aiGenerating') : t('playground.aiGenerate')}
                                     </button>
                                 </div>
                                 <textarea
                                     className="w-full h-28 p-2.5 text-xs border border-slate-200 rounded-lg resize-none focus:outline-none focus:ring-1 focus:ring-violet-400 focus:border-violet-400 text-slate-700 leading-relaxed"
-                                    placeholder="Nhập bản tóm tắt tham chiếu hoặc nhấn 'AI sinh tự động'..."
+                                    placeholder={t('playground.refPlaceholder')}
                                     value={reference}
                                     onChange={(e) => setReference(e.target.value)}
                                 />
@@ -411,7 +410,7 @@ const Playground = () => {
                                     ) : (
                                         <BarChart3 className="w-3 h-3" />
                                     )}
-                                    {evalLoading ? 'Đang chấm...' : 'Chấm điểm'}
+                                    {evalLoading ? t('playground.scoring') : t('playground.score')}
                                 </Button>
                             </div>
 
@@ -427,7 +426,7 @@ const Playground = () => {
                             {evalResult && (
                                 <div className="space-y-2.5 bg-slate-50 rounded-lg p-3">
                                     <div className="flex items-center justify-between">
-                                        <span className="text-xs font-semibold text-slate-700">Kết quả đánh giá</span>
+                                        <span className="text-xs font-semibold text-slate-700">{t('playground.evalResults')}</span>
                                         <span className="text-xs text-slate-400">{evalResult.processing_time_ms}ms</span>
                                     </div>
 
@@ -472,19 +471,19 @@ const Playground = () => {
             <div className="bg-white rounded-lg border border-slate-200 p-4">
                 <div className="grid grid-cols-4 gap-6">
                     <div>
-                        <span className="text-xs text-slate-500">Từ gốc</span>
+                        <span className="text-xs text-slate-500">{t('playground.inputWords')}</span>
                         <p className="text-xl font-semibold text-slate-900 mt-1">{metrics?.inputWords || '-'}</p>
                     </div>
                     <div>
-                        <span className="text-xs text-slate-500">Từ tóm tắt</span>
+                        <span className="text-xs text-slate-500">{t('playground.outputWords')}</span>
                         <p className="text-xl font-semibold text-blue-600 mt-1">{metrics?.outputWords || '-'}</p>
                     </div>
                     <div>
-                        <span className="text-xs text-slate-500">Tỉ lệ nén</span>
+                        <span className="text-xs text-slate-500">{t('playground.compressionRatio')}</span>
                         <p className="text-xl font-semibold text-emerald-600 mt-1">{metrics?.compression ? `${metrics.compression}%` : '-'}</p>
                     </div>
                     <div>
-                        <span className="text-xs text-slate-500">Thời gian</span>
+                        <span className="text-xs text-slate-500">{t('common.time')}</span>
                         <p className="text-xl font-semibold text-slate-900 mt-1">{metrics?.time || '-'}</p>
                     </div>
                 </div>

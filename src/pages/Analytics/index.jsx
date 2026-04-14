@@ -24,8 +24,10 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/common';
 import historyService from '@/services/historyService';
+import { useTranslation } from 'react-i18next';
 
 const Analytics = () => {
+    const { t } = useTranslation();
     const [analytics, setAnalytics] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -38,7 +40,7 @@ const Analytics = () => {
             setAnalytics(response);
         } catch (err) {
             console.error('Failed to fetch analytics:', err);
-            setError('Không thể tải dữ liệu thống kê.');
+            setError(t('analytics.loadError'));
         } finally {
             setLoading(false);
         }
@@ -65,7 +67,7 @@ const Analytics = () => {
                     <AlertCircle className="w-10 h-10 text-slate-400 mx-auto mb-3" />
                     <p className="text-slate-600 mb-4">{error}</p>
                     <Button variant="outline" onClick={fetchAnalytics} size="sm">
-                        Thử lại
+                        {t('common.retry')}
                     </Button>
                 </div>
             </div>
@@ -76,11 +78,11 @@ const Analytics = () => {
         return (
             <div>
                 <div className="mb-8">
-                    <h1 className="text-2xl font-semibold text-slate-900">Overview</h1>
+                    <h1 className="text-2xl font-semibold text-slate-900">{t('analytics.title')}</h1>
                 </div>
                 <div className="bg-white rounded-lg border border-slate-200 p-12 text-center">
                     <FileText className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-                    <p className="text-slate-500">Chưa có dữ liệu thống kê</p>
+                    <p className="text-slate-500">{t('analytics.noData')}</p>
                 </div>
             </div>
         );
@@ -105,8 +107,8 @@ const Analytics = () => {
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-2xl font-semibold text-slate-900">Overview</h1>
-                    <p className="text-slate-500 text-sm mt-1">Thống kê hoạt động hệ thống</p>
+                    <h1 className="text-2xl font-semibold text-slate-900">{t('analytics.title')}</h1>
+                    <p className="text-slate-500 text-sm mt-1">{t('analytics.subtitle')}</p>
                 </div>
                 <button
                     onClick={fetchAnalytics}
@@ -120,7 +122,7 @@ const Analytics = () => {
             <div className="grid grid-cols-4 gap-6">
                 <div className="bg-white rounded-lg border border-slate-200 p-6">
                     <div className="flex items-center justify-between">
-                        <span className="text-sm text-slate-500">Tổng tóm tắt</span>
+                        <span className="text-sm text-slate-500">{t('analytics.totalSummaries')}</span>
                         <span className="text-xs text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full flex items-center gap-0.5">
                             <ArrowUpRight className="w-3 h-3" />
                             12%
@@ -131,37 +133,36 @@ const Analytics = () => {
 
                 <div className="bg-white rounded-lg border border-slate-200 p-6">
                     <div className="flex items-center justify-between">
-                        <span className="text-sm text-slate-500">Có đánh giá</span>
+                        <span className="text-sm text-slate-500">{t('analytics.withFeedback')}</span>
                     </div>
                     <p className="text-3xl font-semibold text-slate-900 mt-2">{analytics.total_with_feedback.toLocaleString()}</p>
                     <p className="text-xs text-slate-400 mt-1">
-                        {analytics.total_summaries > 0 ? ((analytics.total_with_feedback / analytics.total_summaries) * 100).toFixed(0) : 0}% tổng số
+                        {analytics.total_summaries > 0 ? ((analytics.total_with_feedback / analytics.total_summaries) * 100).toFixed(0) : 0}% {t('analytics.ofTotal')}
                     </p>
                 </div>
 
                 <div className="bg-white rounded-lg border border-slate-200 p-6">
                     <div className="flex items-center justify-between">
-                        <span className="text-sm text-slate-500">Tỉ lệ nén</span>
+                        <span className="text-sm text-slate-500">{t('analytics.compressionRatio')}</span>
                     </div>
                     <p className="text-3xl font-semibold text-slate-900 mt-2">{analytics.avg_compression_ratio}%</p>
-                    <p className="text-xs text-slate-400 mt-1">Trung bình</p>
+                    <p className="text-xs text-slate-400 mt-1">{t('analytics.average')}</p>
                 </div>
 
                 <div className="bg-white rounded-lg border border-slate-200 p-6">
                     <div className="flex items-center justify-between">
-                        <span className="text-sm text-slate-500">Thời gian xử lý</span>
+                        <span className="text-sm text-slate-500">{t('analytics.processingTime')}</span>
                     </div>
                     <p className="text-3xl font-semibold text-slate-900 mt-2">{analytics.avg_processing_time_ms}<span className="text-lg text-slate-400">ms</span></p>
-                    <p className="text-xs text-slate-400 mt-1">Trung bình</p>
+                    <p className="text-xs text-slate-400 mt-1">{t('analytics.average')}</p>
                 </div>
             </div>
 
             {/* Charts Row */}
             <div className="grid grid-cols-3 gap-6">
-                {/* Activity Chart */}
                 <div className="col-span-2 bg-white rounded-lg border border-slate-200 p-6">
                     <div className="flex items-center justify-between mb-6">
-                        <h3 className="text-sm font-medium text-slate-900">Hoạt động 30 ngày</h3>
+                        <h3 className="text-sm font-medium text-slate-900">{t('analytics.activity30Days')}</h3>
                     </div>
                     <div className="h-64">
                         <ResponsiveContainer width="100%" height="100%">
@@ -173,55 +174,21 @@ const Analytics = () => {
                                     </linearGradient>
                                 </defs>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                                <XAxis
-                                    dataKey="date"
-                                    axisLine={false}
-                                    tickLine={false}
-                                    tick={{ fontSize: 11, fill: '#94a3b8' }}
-                                    dy={10}
-                                />
-                                <YAxis
-                                    axisLine={false}
-                                    tickLine={false}
-                                    tick={{ fontSize: 11, fill: '#94a3b8' }}
-                                    dx={-10}
-                                />
-                                <Tooltip
-                                    contentStyle={{
-                                        backgroundColor: '#fff',
-                                        border: '1px solid #e2e8f0',
-                                        borderRadius: '6px',
-                                        fontSize: '12px'
-                                    }}
-                                />
-                                <Area
-                                    type="monotone"
-                                    dataKey="count"
-                                    stroke="#3b82f6"
-                                    strokeWidth={2}
-                                    fill="url(#colorCount)"
-                                    name="Tóm tắt"
-                                />
+                                <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#94a3b8' }} dy={10} />
+                                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#94a3b8' }} dx={-10} />
+                                <Tooltip contentStyle={{ backgroundColor: '#fff', border: '1px solid #e2e8f0', borderRadius: '6px', fontSize: '12px' }} />
+                                <Area type="monotone" dataKey="count" stroke="#3b82f6" strokeWidth={2} fill="url(#colorCount)" name={t('analytics.chartLabel')} />
                             </AreaChart>
                         </ResponsiveContainer>
                     </div>
                 </div>
 
-                {/* Model Distribution */}
                 <div className="bg-white rounded-lg border border-slate-200 p-6">
-                    <h3 className="text-sm font-medium text-slate-900 mb-6">Phân bố Model</h3>
+                    <h3 className="text-sm font-medium text-slate-900 mb-6">{t('analytics.modelDistribution')}</h3>
                     <div className="h-48">
                         <ResponsiveContainer width="100%" height="100%">
                             <PieChart>
-                                <Pie
-                                    data={modelChartData}
-                                    cx="50%"
-                                    cy="50%"
-                                    innerRadius={45}
-                                    outerRadius={70}
-                                    paddingAngle={2}
-                                    dataKey="value"
-                                >
+                                <Pie data={modelChartData} cx="50%" cy="50%" innerRadius={45} outerRadius={70} paddingAngle={2} dataKey="value">
                                     {modelChartData.map((_, index) => (
                                         <Cell key={`cell-${index}`} fill={MODEL_COLORS[index % MODEL_COLORS.length]} />
                                     ))}
@@ -234,10 +201,7 @@ const Analytics = () => {
                         {modelChartData.map((item, idx) => (
                             <div key={idx} className="flex items-center justify-between text-sm">
                                 <div className="flex items-center gap-2">
-                                    <div
-                                        className="w-2 h-2 rounded-full"
-                                        style={{ backgroundColor: MODEL_COLORS[idx % MODEL_COLORS.length] }}
-                                    />
+                                    <div className="w-2 h-2 rounded-full" style={{ backgroundColor: MODEL_COLORS[idx % MODEL_COLORS.length] }} />
                                     <span className="text-slate-600">{item.name}</span>
                                 </div>
                                 <span className="text-slate-900 font-medium">{item.value}</span>
@@ -249,62 +213,51 @@ const Analytics = () => {
 
             {/* Bottom Row */}
             <div className="grid grid-cols-3 gap-6">
-                {/* Feedback Summary */}
                 <div className="bg-white rounded-lg border border-slate-200 p-6">
-                    <h3 className="text-sm font-medium text-slate-900 mb-4">Đánh giá người dùng</h3>
+                    <h3 className="text-sm font-medium text-slate-900 mb-4">{t('analytics.userFeedback')}</h3>
                     <div className="space-y-4">
                         <div>
                             <div className="flex items-center justify-between text-sm mb-1">
-                                <span className="text-slate-600">Tốt</span>
+                                <span className="text-slate-600">{t('common.good')}</span>
                                 <span className="text-slate-900 font-medium">{analytics.rating_distribution.good}</span>
                             </div>
                             <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
-                                <div
-                                    className="h-full bg-emerald-500 rounded-full"
-                                    style={{ width: `${analytics.total_with_feedback > 0 ? (analytics.rating_distribution.good / analytics.total_with_feedback) * 100 : 0}%` }}
-                                />
+                                <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${analytics.total_with_feedback > 0 ? (analytics.rating_distribution.good / analytics.total_with_feedback) * 100 : 0}%` }} />
                             </div>
                         </div>
                         <div>
                             <div className="flex items-center justify-between text-sm mb-1">
-                                <span className="text-slate-600">Trung bình</span>
+                                <span className="text-slate-600">{t('common.neutral')}</span>
                                 <span className="text-slate-900 font-medium">{analytics.rating_distribution.neutral}</span>
                             </div>
                             <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
-                                <div
-                                    className="h-full bg-slate-400 rounded-full"
-                                    style={{ width: `${analytics.total_with_feedback > 0 ? (analytics.rating_distribution.neutral / analytics.total_with_feedback) * 100 : 0}%` }}
-                                />
+                                <div className="h-full bg-slate-400 rounded-full" style={{ width: `${analytics.total_with_feedback > 0 ? (analytics.rating_distribution.neutral / analytics.total_with_feedback) * 100 : 0}%` }} />
                             </div>
                         </div>
                         <div>
                             <div className="flex items-center justify-between text-sm mb-1">
-                                <span className="text-slate-600">Tệ</span>
+                                <span className="text-slate-600">{t('common.bad')}</span>
                                 <span className="text-slate-900 font-medium">{analytics.rating_distribution.bad}</span>
                             </div>
                             <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
-                                <div
-                                    className="h-full bg-red-500 rounded-full"
-                                    style={{ width: `${analytics.total_with_feedback > 0 ? (analytics.rating_distribution.bad / analytics.total_with_feedback) * 100 : 0}%` }}
-                                />
+                                <div className="h-full bg-red-500 rounded-full" style={{ width: `${analytics.total_with_feedback > 0 ? (analytics.rating_distribution.bad / analytics.total_with_feedback) * 100 : 0}%` }} />
                             </div>
                         </div>
                     </div>
                 </div>
 
-                {/* Model Performance */}
                 <div className="col-span-2 bg-white rounded-lg border border-slate-200 overflow-hidden">
                     <div className="p-4 border-b border-slate-100">
-                        <h3 className="text-sm font-medium text-slate-900">Hiệu suất Model</h3>
+                        <h3 className="text-sm font-medium text-slate-900">{t('analytics.modelPerformance')}</h3>
                     </div>
                     <table className="w-full text-sm">
                         <thead className="bg-slate-50 text-slate-500">
                             <tr>
-                                <th className="px-4 py-3 text-left font-medium">Model</th>
-                                <th className="px-4 py-3 text-right font-medium">Số lượng</th>
-                                <th className="px-4 py-3 text-right font-medium">Nén</th>
-                                <th className="px-4 py-3 text-right font-medium">Thời gian</th>
-                                <th className="px-4 py-3 text-right font-medium">Tỉ lệ tốt</th>
+                                <th className="px-4 py-3 text-left font-medium">{t('analytics.modelCol')}</th>
+                                <th className="px-4 py-3 text-right font-medium">{t('analytics.countCol')}</th>
+                                <th className="px-4 py-3 text-right font-medium">{t('analytics.compressionCol')}</th>
+                                <th className="px-4 py-3 text-right font-medium">{t('analytics.timeCol')}</th>
+                                <th className="px-4 py-3 text-right font-medium">{t('analytics.goodRateCol')}</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">

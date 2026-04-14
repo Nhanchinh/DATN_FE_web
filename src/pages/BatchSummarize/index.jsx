@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
     Upload,
     FileText,
@@ -21,15 +22,16 @@ import {
 import { Button } from '@/components/common';
 
 const MODEL_OPTIONS = [
-    { value: 'vit5_fin', label: 'ViT5 Financial v2', tag: 'Finance', color: 'bg-teal-100 text-teal-700' },
-    { value: 'qwen', label: 'Qwen 2.5-7B', tag: 'LLM', color: 'bg-orange-100 text-orange-700' },
-    { value: 'phobert_finance', label: 'PhoBERT Finance', tag: 'Extractive', color: 'bg-rose-100 text-rose-700' },
+    { value: 'vit5_fin', label: 'ViT5 Financial v2', tagKey: 'modelTags.financial', color: 'bg-teal-100 text-teal-700' },
+    { value: 'qwen', label: 'Qwen 2.5-7B', tagKey: 'modelTags.llm', color: 'bg-orange-100 text-orange-700' },
+    { value: 'phobert_finance', label: 'PhoBERT Finance', tagKey: 'modelTags.extractive', color: 'bg-rose-100 text-rose-700' },
 ];
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 const BatchSummarize = () => {
     const fileInputRef = useRef(null);
+    const { t } = useTranslation();
     const [file, setFile] = useState(null);
     const [isProcessing, setIsProcessing] = useState(false);
     const [error, setError] = useState('');
@@ -71,12 +73,12 @@ const BatchSummarize = () => {
         const selectedFile = e.target.files[0];
         if (selectedFile) {
             if (!selectedFile.name.match(/\.(csv|xlsx|xls)$/)) {
-                setError('Vui lòng chọn file CSV hoặc Excel (.xlsx, .xls)');
+                setError(t('common.invalidFileType'));
                 setFile(null);
                 return;
             }
             if (selectedFile.size > 10 * 1024 * 1024) {
-                setError('File quá lớn. Vui lòng chọn file < 10MB');
+                setError(t('common.fileTooLarge'));
                 setFile(null);
                 return;
             }
@@ -134,7 +136,7 @@ const BatchSummarize = () => {
 
             if (!resp.ok) {
                 const errData = await resp.json();
-                throw new Error(errData.detail || 'Lỗi bắt đầu batch');
+                throw new Error(errData.detail || t('batchSum.startError'));
             }
 
             const reader = resp.body.getReader();
@@ -171,10 +173,10 @@ const BatchSummarize = () => {
             }
         } catch (err) {
             if (err.name === 'AbortError') {
-                setError('Đã hủy quá trình tóm tắt');
+                setError(t('batchSum.cancelledMsg'));
             } else {
                 console.error('Batch error:', err);
-                setError(err.message || 'Lỗi xử lý batch');
+                setError(err.message || t('batchSum.batchError'));
             }
         } finally {
             setIsProcessing(false);
@@ -224,11 +226,11 @@ const BatchSummarize = () => {
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-slate-200 pb-6">
                 <div>
-                    <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Batch Tóm tắt</h1>
+                    <h1 className="text-3xl font-bold text-slate-900 tracking-tight">{t('batchSum.title')}</h1>
                     <p className="text-slate-500 mt-2 text-lg">
-                        Upload file Excel/CSV chứa cột <strong>content</strong> → chọn model → tóm tắt tự động hàng loạt.
+                        <span dangerouslySetInnerHTML={{ __html: t('batchSum.description') }} />
                         <br />
-                        Cần kết nối <strong>Colab GPU Server</strong> để chạy.
+                        <span dangerouslySetInnerHTML={{ __html: t('batchSum.needColab') }} />
                     </p>
                 </div>
                 <Button
@@ -237,7 +239,7 @@ const BatchSummarize = () => {
                     onClick={handleDownloadTemplate}
                 >
                     <Download className="w-4 h-4" />
-                    <span>Download Template</span>
+                    <span>{t('common.downloadTemplate')}</span>
                 </Button>
             </div>
 
@@ -247,13 +249,13 @@ const BatchSummarize = () => {
                     {/* Config Card */}
                     <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
                         <h3 className="font-semibold text-slate-900 flex items-center gap-2 mb-6 text-lg">
-                            <Settings2 className="w-5 h-5 text-slate-500" /> Cấu hình
+                            <Settings2 className="w-5 h-5 text-slate-500" /> {t('common.config')}
                         </h3>
 
                         <div className="space-y-5">
                             {/* Model Select */}
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-2">Model tóm tắt</label>
+                                <label className="block text-sm font-medium text-slate-700 mb-2">{t('batchSum.modelLabel')}</label>
                                 <div className="relative">
                                     <select
                                         value={model}
@@ -263,7 +265,7 @@ const BatchSummarize = () => {
                                     >
                                         {MODEL_OPTIONS.map(opt => (
                                             <option key={opt.value} value={opt.value}>
-                                                {opt.label} ({opt.tag})
+                                                {opt.label} ({t(opt.tagKey)})
                                             </option>
                                         ))}
                                     </select>
@@ -271,7 +273,7 @@ const BatchSummarize = () => {
                                 </div>
                                 {selectedModel && (
                                     <span className={`inline-block mt-2 text-xs px-2 py-1 rounded-lg font-medium ${selectedModel.color}`}>
-                                        {selectedModel.tag}
+                                        {t(selectedModel.tagKey)}
                                     </span>
                                 )}
                             </div>
@@ -279,7 +281,7 @@ const BatchSummarize = () => {
                             {/* Max Length */}
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 mb-2">
-                                    Độ dài tối đa: <span className="text-blue-600 font-bold">{maxLength}</span>
+                                    {t('batchSum.maxLength')}: <span className="text-blue-600 font-bold">{maxLength}</span>
                                 </label>
                                 <input
                                     type="range"
@@ -302,31 +304,28 @@ const BatchSummarize = () => {
                     {/* Guidelines Card */}
                     <div className="bg-blue-50/50 border border-blue-100 rounded-2xl p-6">
                         <h4 className="font-semibold text-blue-900 mb-3 flex items-center gap-2">
-                            <FileSpreadsheet className="w-4 h-4" /> Hướng dẫn
+                            <FileSpreadsheet className="w-4 h-4" /> {t('common.guidelines')}
                         </h4>
                         <ul className="text-sm text-blue-800 space-y-3">
                             <li className="flex items-start gap-2">
                                 <span className="bg-blue-100 text-blue-600 rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">1</span>
-                                <span>Nhấn <strong>Download Template</strong> để tải file mẫu</span>
+                                <span dangerouslySetInnerHTML={{ __html: t('batchSum.guide1') }} />
                             </li>
                             <li className="flex items-start gap-2">
                                 <span className="bg-blue-100 text-blue-600 rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">2</span>
-                                <div>Điền văn bản cần tóm tắt vào cột <code className="bg-white border border-blue-200 px-1 py-0.5 rounded text-xs font-mono">content</code></div>
+                                <span dangerouslySetInnerHTML={{ __html: t('batchSum.guide2') }} />
                             </li>
                             <li className="flex items-start gap-2">
                                 <span className="bg-blue-100 text-blue-600 rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">3</span>
-                                <span>Upload file → Chọn model → Nhấn <strong>Chạy Tóm tắt</strong></span>
+                                <span dangerouslySetInnerHTML={{ __html: t('batchSum.guide3') }} />
                             </li>
                             <li className="flex items-start gap-2">
                                 <span className="bg-blue-100 text-blue-600 rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">4</span>
-                                <span>Export kết quả → dùng luôn cho <strong>Batch Eval</strong></span>
+                                <span dangerouslySetInnerHTML={{ __html: t('batchSum.guide4') }} />
                             </li>
                         </ul>
                         <div className="mt-4 p-3 bg-white/60 rounded-xl border border-blue-100">
-                            <p className="text-xs text-blue-700">
-                                <strong>⚠️ Lưu ý:</strong> Thời gian xử lý phụ thuộc số bài và model.
-                                Model LLM (Qwen) sẽ chậm hơn các model khác.
-                            </p>
+                            <p className="text-xs text-blue-700" dangerouslySetInnerHTML={{ __html: t('batchSum.timeNote') }} />
                         </div>
                     </div>
                 </div>
@@ -350,10 +349,10 @@ const BatchSummarize = () => {
                                 <div className="w-20 h-20 bg-white text-blue-600 rounded-full shadow-sm flex items-center justify-center mx-auto mb-6 group-hover:scale-110 group-hover:text-blue-700 transition-all duration-300">
                                     <Upload className="w-10 h-10" />
                                 </div>
-                                <h3 className="text-xl font-bold text-slate-800 mb-3 group-hover:text-blue-700 transition-colors">Drag & Drop or Click to Upload</h3>
-                                <p className="text-slate-500 mb-6 max-w-sm mx-auto">Upload file chứa cột <strong>content</strong> để tóm tắt hàng loạt.</p>
+                                <h3 className="text-xl font-bold text-slate-800 mb-3 group-hover:text-blue-700 transition-colors">{t('common.dragDropUpload')}</h3>
+                                <p className="text-slate-500 mb-6 max-w-sm mx-auto" dangerouslySetInnerHTML={{ __html: t('batchSum.uploadDesc') }} />
                                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-200/50 text-xs font-medium text-slate-600">
-                                    <FileText className="w-3 h-3" /> .csv, .xlsx, .xls • Max 10MB
+                                    <FileText className="w-3 h-3" /> {t('common.fileFormats')} • {t('common.maxSize')}
                                 </div>
                             </div>
 
@@ -389,7 +388,7 @@ const BatchSummarize = () => {
                                     <div className="flex items-center justify-between mb-2 text-sm">
                                         <span className="text-slate-600 flex items-center gap-2">
                                             <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
-                                            Đang tóm tắt...
+                                            {t('batchSum.summarizing')}
                                         </span>
                                         <span className="text-blue-600 font-bold">{completed}/{total} ({progress}%)</span>
                                     </div>
@@ -400,7 +399,7 @@ const BatchSummarize = () => {
                                         />
                                     </div>
                                     <p className="text-xs text-slate-400 mt-2 text-center">
-                                        ✅ {successCount} thành công • ❌ {failCount} lỗi
+                                        ✅ {successCount} {t('common.success')} • ❌ {failCount} {t('common.failed')}
                                     </p>
                                 </div>
                             )}
@@ -412,7 +411,7 @@ const BatchSummarize = () => {
                                     disabled={isProcessing}
                                     className="min-w-[120px] h-11 border-slate-300 hover:bg-slate-50 text-slate-700"
                                 >
-                                    Chọn lại
+                                    {t('common.selectAgain')}
                                 </Button>
                                 {isProcessing ? (
                                     <Button
@@ -420,7 +419,7 @@ const BatchSummarize = () => {
                                         className="min-w-[160px] h-11 bg-red-600 hover:bg-red-700 text-white border-0 gap-2"
                                     >
                                         <Square className="w-4 h-4" />
-                                        Hủy xử lý
+                                        {t('common.cancelProcess')}
                                     </Button>
                                 ) : (
                                     <Button
@@ -429,7 +428,7 @@ const BatchSummarize = () => {
                                         className="min-w-[160px] h-11 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white shadow-lg shadow-blue-500/20 border-0 gap-2"
                                     >
                                         <Play className="w-4 h-4" />
-                                        {stats ? 'Đã hoàn tất' : 'Chạy Tóm tắt'}
+                                        {stats ? t('batchSum.completed') : t('batchSum.runSummarize')}
                                     </Button>
                                 )}
                             </div>
@@ -451,7 +450,7 @@ const BatchSummarize = () => {
                                     ) : (
                                         <Loader2 className="w-5 h-5 text-blue-500 animate-spin" />
                                     )}
-                                    {stats ? 'Tóm tắt hoàn tất' : 'Đang xử lý...'}
+                                    {stats ? t('batchSum.sumComplete') : t('common.processing')}
                                 </h3>
                                 <p className="text-slate-500 text-sm mt-1">
                                     Model: <strong>{selectedModel?.label}</strong>
@@ -461,9 +460,9 @@ const BatchSummarize = () => {
                                 {stats && (
                                     <div className="flex items-center gap-2 text-sm text-slate-600 bg-white px-3 py-1.5 rounded-lg border border-slate-200 shadow-sm">
                                         <Clock className="w-4 h-4" />
-                                        Tổng: <span className="font-mono font-bold text-slate-900">{stats.total_time_s}s</span>
+                                        {t('batchSum.totalTime')}: <span className="font-mono font-bold text-slate-900">{stats.total_time_s}s</span>
                                         <span className="text-slate-300 mx-1">|</span>
-                                        TB: <span className="font-mono font-bold text-slate-900">{stats.avg_time_s}s/bài</span>
+                                        {t('batchSum.avgPerItem')}: <span className="font-mono font-bold text-slate-900">{stats.avg_time_s}s</span>
                                     </div>
                                 )}
                                 {results.length > 0 && (
@@ -472,8 +471,8 @@ const BatchSummarize = () => {
                                         className="bg-emerald-600 hover:bg-emerald-700 text-white gap-2"
                                         onClick={handleExportCSV}
                                     >
-                                        <FileDown className="w-4 h-4" />
-                                        Export CSV
+                                    <FileDown className="w-4 h-4" />
+                                    {t('common.exportCsv')}
                                     </Button>
                                 )}
                             </div>
@@ -484,23 +483,23 @@ const BatchSummarize = () => {
                             <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
                                 <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 text-center">
                                     <div className="text-2xl font-black text-slate-700 mb-1">{total || results.length}</div>
-                                    <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">Tổng</div>
+                                    <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">{t('common.total')}</div>
                                 </div>
                                 <div className="p-4 bg-emerald-50 rounded-2xl border border-emerald-100 text-center">
                                     <div className="text-2xl font-black text-emerald-600 mb-1">{successCount}</div>
-                                    <div className="text-xs font-bold text-emerald-800 uppercase tracking-wider">Thành công</div>
+                                    <div className="text-xs font-bold text-emerald-800 uppercase tracking-wider">{t('common.success')}</div>
                                 </div>
                                 <div className="p-4 bg-red-50 rounded-2xl border border-red-100 text-center">
                                     <div className="text-2xl font-black text-red-600 mb-1">{failCount}</div>
-                                    <div className="text-xs font-bold text-red-800 uppercase tracking-wider">Lỗi</div>
+                                    <div className="text-xs font-bold text-red-800 uppercase tracking-wider">{t('common.failed')}</div>
                                 </div>
                                 <div className="p-4 bg-blue-50 rounded-2xl border border-blue-100 text-center">
                                     <div className="text-2xl font-black text-blue-600 mb-1">{stats?.total_time_s || '...'}</div>
-                                    <div className="text-xs font-bold text-blue-800 uppercase tracking-wider">Tổng (s)</div>
+                                    <div className="text-xs font-bold text-blue-800 uppercase tracking-wider">{t('batchSum.totalTime')}</div>
                                 </div>
                                 <div className="p-4 bg-amber-50 rounded-2xl border border-amber-100 text-center">
                                     <div className="text-2xl font-black text-amber-600 mb-1">{stats?.avg_time_s || '...'}</div>
-                                    <div className="text-xs font-bold text-amber-800 uppercase tracking-wider">TB/bài (s)</div>
+                                    <div className="text-xs font-bold text-amber-800 uppercase tracking-wider">{t('batchSum.avgPerItem')}</div>
                                 </div>
                             </div>
 
@@ -510,10 +509,10 @@ const BatchSummarize = () => {
                                     <thead className="bg-slate-50 text-slate-700 font-semibold border-b">
                                         <tr>
                                             <th className="p-4 w-12">#</th>
-                                            <th className="p-4">Văn bản gốc</th>
-                                            <th className="p-4">Tóm tắt</th>
-                                            <th className="p-4 w-20 text-center">Thời gian</th>
-                                            <th className="p-4 w-24 text-center">Trạng thái</th>
+                                            <th className="p-4">{t('batchSum.originalCol')}</th>
+                                            <th className="p-4">{t('batchSum.summaryCol')}</th>
+                                            <th className="p-4 w-20 text-center">{t('batchSum.timeCol')}</th>
+                                            <th className="p-4 w-24 text-center">{t('batchSum.statusCol')}</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y">
@@ -544,11 +543,11 @@ const BatchSummarize = () => {
                                                 <td className="p-4 text-center">
                                                     {r.success ? (
                                                         <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700">
-                                                            <CheckCircle className="w-3 h-3" /> OK
+                                                            <CheckCircle className="w-3 h-3" /> {t('common.done')}
                                                         </span>
                                                     ) : (
                                                         <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-700">
-                                                            <XCircle className="w-3 h-3" /> Lỗi
+                                                            <XCircle className="w-3 h-3" /> {t('common.failed')}
                                                         </span>
                                                     )}
                                                 </td>
@@ -564,11 +563,11 @@ const BatchSummarize = () => {
                                         >
                                             {showAllResults ? (
                                                 <>
-                                                    <EyeOff className="w-3.5 h-3.5" /> Thu gọn
+                                                    <EyeOff className="w-3.5 h-3.5" /> {t('batchSum.collapse')}
                                                 </>
                                             ) : (
                                                 <>
-                                                    <Eye className="w-3.5 h-3.5" /> Xem tất cả {results.length} dòng
+                                                    <Eye className="w-3.5 h-3.5" /> {t('batchSum.viewAll', { count: results.length })}
                                                 </>
                                             )}
                                         </button>

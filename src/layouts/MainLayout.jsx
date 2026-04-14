@@ -1,8 +1,9 @@
 import { useState, useRef, useEffect } from 'react';
-import { Outlet, NavLink, useNavigate } from 'react-router-dom';
+import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { LayoutDashboard, Terminal, Database, ChevronRight, Menu, LogOut, Settings, ChevronUp, History, FileCheck, GitCompare, Users, Shield, FileSpreadsheet } from 'lucide-react';
 import { useAuth } from '@/hooks';
 import { ServerStatus } from '@/components/common';
+import { useTranslation } from 'react-i18next';
 
 /**
  * MainLayout - Research Dashboard Layout
@@ -10,18 +11,20 @@ import { ServerStatus } from '@/components/common';
  */
 const MainLayout = () => {
     const navigate = useNavigate();
+    const location = useLocation();
     const { user, logout } = useAuth();
+    const { t } = useTranslation();
     const [showUserMenu, setShowUserMenu] = useState(false);
     const menuRef = useRef(null);
 
     const navItems = [
-        { path: '/analytics', label: 'Overview', icon: LayoutDashboard },
-        { path: '/playground', label: 'Playground', icon: Terminal },
-        { path: '/compare', label: 'Compare', icon: GitCompare },
-        { path: '/single-eval', label: 'Single Eval', icon: FileCheck },
-        { path: '/batch-eval', label: 'Batch Eval', icon: Database },
-        { path: '/batch-summarize', label: 'Batch Tóm tắt', icon: FileSpreadsheet },
-        { path: '/history', label: 'History', icon: History },
+        { path: '/analytics', label: t('nav.overview'), icon: LayoutDashboard },
+        { path: '/playground', label: t('nav.playground'), icon: Terminal },
+        { path: '/compare', label: t('nav.compare'), icon: GitCompare },
+        { path: '/single-eval', label: t('nav.singleEval'), icon: FileCheck },
+        { path: '/batch-eval', label: t('nav.batchEval'), icon: Database },
+        { path: '/batch-summarize', label: t('nav.batchSummarize'), icon: FileSpreadsheet },
+        { path: '/history', label: t('nav.history'), icon: History },
     ];
 
     // Close menu when clicking outside
@@ -49,11 +52,11 @@ const MainLayout = () => {
                         <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">TS</div>
                         TextSum
                     </div>
-                    <div className="text-xs text-slate-500 mt-1 uppercase tracking-wider font-semibold">Evaluation System</div>
+                    <div className="text-xs text-slate-500 mt-1 uppercase tracking-wider font-semibold">{t('nav.evaluationSystem')}</div>
                 </NavLink>
 
-                <nav className="flex-1 px-4 space-y-2 mt-4 overflow-y-auto">
-                    <div className="text-xs font-semibold text-slate-500 px-3 mb-2 uppercase tracking-wider">Research</div>
+                <nav className="flex-1 px-4 space-y-2 mt-4 overflow-y-auto scrollbar-hide">
+                    <div className="text-xs font-semibold text-slate-500 px-3 mb-2 uppercase tracking-wider">{t('nav.features')}</div>
                     {navItems.map((item) => (
                         <NavLink
                             key={item.path}
@@ -74,7 +77,7 @@ const MainLayout = () => {
                         <>
                             <div className="text-xs font-semibold text-amber-500 px-3 mt-6 mb-2 uppercase tracking-wider flex items-center gap-2">
                                 <Shield className="w-3 h-3" />
-                                Admin
+                                {t('nav.admin')}
                             </div>
                             <NavLink
                                 to="/admin/users"
@@ -84,7 +87,7 @@ const MainLayout = () => {
                                 `}
                             >
                                 <Users className="w-5 h-5" />
-                                <span className="font-medium">Quản lý Users</span>
+                                <span className="font-medium">{t('nav.userManagement')}</span>
                                 <ChevronRight className="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
                             </NavLink>
                         </>
@@ -116,7 +119,7 @@ const MainLayout = () => {
                                 </div>
                                 <div className="mt-2 px-1">
                                     <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${user?.role === 'admin' ? 'bg-amber-500/20 text-amber-400' : 'bg-blue-500/20 text-blue-400'}`}>
-                                        {user?.role === 'admin' ? 'Admin' : 'User'}
+                                        {user?.role === 'admin' ? t('common.admin') : t('common.user')}
                                     </span>
                                 </div>
                             </div>
@@ -129,7 +132,7 @@ const MainLayout = () => {
                                     className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-slate-300 hover:bg-slate-700 hover:text-white transition-colors"
                                 >
                                     <Settings className="w-4 h-4" />
-                                    Cài đặt
+                                    {t('nav.settings')}
                                 </NavLink>
                             </div>
 
@@ -140,7 +143,7 @@ const MainLayout = () => {
                                     className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-colors"
                                 >
                                     <LogOut className="w-4 h-4" />
-                                    Đăng xuất
+                                    {t('nav.logout')}
                                 </button>
                             </div>
                         </div>
@@ -171,13 +174,18 @@ const MainLayout = () => {
             <div className="flex-1 flex flex-col ml-64 min-w-0">
                 {/* Simplified Header for Dashboard */}
                 <header className="h-16 bg-white border-b border-slate-200 sticky top-0 z-10 px-8 flex items-center justify-between">
-                    <div className="flex items-center gap-4 text-slate-400">
-                        <Menu className="w-5 h-5" />
-                        <span className="text-sm">Workspace / Project A</span>
+                    <div className="flex items-center gap-3 text-sm">
+                        <span className="text-slate-400">TextSum</span>
+                        <ChevronRight className="w-3.5 h-3.5 text-slate-300" />
+                        <span className="text-slate-700 font-medium">
+                            {(() => {
+                                const allItems = [...navItems, { path: '/admin/users', label: t('nav.userManagement') }, { path: '/settings', label: t('nav.settings') }];
+                                const current = allItems.find(item => location.pathname === item.path || location.pathname.startsWith(item.path + '/'));
+                                return current?.label || t('nav.overview');
+                            })()}
+                        </span>
                     </div>
-                    <div>
-                        {/* Header actions if needed */}
-                    </div>
+                    <div />
                 </header>
 
                 <main className="flex-1 p-6 overflow-y-auto">

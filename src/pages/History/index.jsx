@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
     History as HistoryIcon,
     ThumbsUp,
@@ -29,6 +30,7 @@ const History = () => {
     // Auth - lấy thông tin user để kiểm tra quyền
     const { user } = useAuth();
     const isAdmin = user?.role === 'admin';
+    const { t } = useTranslation();
 
     // State
     const [items, setItems] = useState([]);
@@ -93,7 +95,7 @@ const History = () => {
             }));
         } catch (err) {
             console.error('Fetch history error:', err);
-            setError(err.response?.data?.detail || 'Không thể tải lịch sử');
+            setError(err.response?.data?.detail || t('history.loadError'));
         } finally {
             setLoading(false);
         }
@@ -138,7 +140,7 @@ const History = () => {
             setShowModal(false);
         } catch (err) {
             console.error('Save feedback error:', err);
-            alert('Lỗi lưu feedback: ' + (err.response?.data?.detail || err.message));
+            alert(t('history.saveFeedbackError') + ': ' + (err.response?.data?.detail || err.message));
         } finally {
             setSavingFeedback(false);
         }
@@ -175,7 +177,7 @@ const History = () => {
             setHumanEvalItem(null);
         } catch (err) {
             console.error('Save human eval error:', err);
-            alert('Lỗi lưu đánh giá: ' + (err.response?.data?.detail || err.message));
+            alert(t('history.saveEvalError') + ': ' + (err.response?.data?.detail || err.message));
         }
     };
 
@@ -190,7 +192,7 @@ const History = () => {
             const response = await historyService.exportBadSummaries(params);
 
             if (response.items.length === 0) {
-                alert('Chưa có bản tóm tắt nào được đánh giá "Bad" (👎). Hãy đánh giá một số bản tóm tắt trước khi export.');
+                alert(t('history.exportNoBad'));
                 setExporting(false);
                 return;
             }
@@ -227,7 +229,7 @@ const History = () => {
             URL.revokeObjectURL(url);
         } catch (err) {
             console.error('Export error:', err);
-            alert('Lỗi export: ' + (err.response?.data?.detail || err.message));
+            alert(err.response?.data?.detail || err.message);
         } finally {
             setExporting(false);
         }
@@ -243,7 +245,7 @@ const History = () => {
             const response = await historyService.exportHumanEval(params);
 
             if (response.items.length === 0) {
-                alert('Chưa có bản tóm tắt nào có Human Evaluation. Hãy đánh giá một số bản tóm tắt bằng ⭐ trước khi export.');
+                alert(t('history.exportNoEval'));
                 setExportingHumanEval(false);
                 return;
             }
@@ -284,7 +286,7 @@ const History = () => {
             URL.revokeObjectURL(url);
         } catch (err) {
             console.error('Export human eval error:', err);
-            alert('Lỗi export: ' + (err.response?.data?.detail || err.message));
+            alert(err.response?.data?.detail || err.message);
         } finally {
             setExportingHumanEval(false);
         }
@@ -310,17 +312,17 @@ const History = () => {
     const handleDeleteSelected = async () => {
         if (selectedIds.length === 0) return;
 
-        if (!confirm(`Bạn có chắc muốn xóa ${selectedIds.length} mục đã chọn?`)) return;
+        if (!confirm(t('history.confirmDeleteSelected', { count: selectedIds.length }))) return;
 
         setDeleting(true);
         try {
             const response = await historyService.bulkDelete(selectedIds);
-            alert(`Đã xóa ${response.deleted_count} mục`);
+            alert(t('history.deletedItems', { count: response.deleted_count }));
             setSelectedIds([]);
             fetchHistory();
         } catch (err) {
             console.error('Delete error:', err);
-            alert('Lỗi xóa: ' + (err.response?.data?.detail || err.message));
+            alert(t('history.deleteError') + ': ' + (err.response?.data?.detail || err.message));
         } finally {
             setDeleting(false);
         }
@@ -328,17 +330,17 @@ const History = () => {
 
     // Delete all
     const handleDeleteAll = async () => {
-        if (!confirm('⚠️ Bạn có chắc muốn XÓA TẤT CẢ lịch sử? Hành động này không thể hoàn tác!')) return;
+        if (!confirm(t('history.confirmDeleteAll'))) return;
 
         setDeleting(true);
         try {
             const response = await historyService.deleteAll();
-            alert(`Đã xóa tất cả ${response.deleted_count} mục`);
+            alert(t('history.deletedAllItems', { count: response.deleted_count }));
             setSelectedIds([]);
             fetchHistory();
         } catch (err) {
             console.error('Delete all error:', err);
-            alert('Lỗi xóa: ' + (err.response?.data?.detail || err.message));
+            alert(t('history.deleteError') + ': ' + (err.response?.data?.detail || err.message));
         } finally {
             setDeleting(false);
         }
@@ -346,14 +348,14 @@ const History = () => {
 
     // Delete single item
     const handleDeleteOne = async (id) => {
-        if (!confirm('Bạn có chắc muốn xóa mục này?')) return;
+        if (!confirm(t('history.confirmDeleteOne'))) return;
 
         try {
             await historyService.delete(id);
             fetchHistory();
         } catch (err) {
             console.error('Delete error:', err);
-            alert('Lỗi xóa: ' + (err.response?.data?.detail || err.message));
+            alert(t('history.deleteError') + ': ' + (err.response?.data?.detail || err.message));
         }
     };
 
@@ -390,10 +392,10 @@ const History = () => {
                 <div>
                     <h1 className="text-3xl font-bold text-slate-800 flex items-center gap-3">
                         <HistoryIcon className="w-8 h-8 text-blue-600" />
-                        Lịch sử Tóm tắt
+                        {t('history.title')}
                     </h1>
                     <p className="text-slate-500 mt-1">
-                        Xem lại và đánh giá các bản tóm tắt để cải thiện mô hình
+                        {t('history.subtitle')}
                     </p>
                 </div>
                 <div className="flex gap-3 flex-wrap">
@@ -403,7 +405,7 @@ const History = () => {
                         onClick={() => setShowFilters(!showFilters)}
                     >
                         <Filter className="w-4 h-4" />
-                        Filters
+                        {t('history.filters')}
                     </Button>
                     {/* Export buttons - Admin only */}
                     {isAdmin && (
@@ -415,7 +417,7 @@ const History = () => {
                                 disabled={exporting}
                             >
                                 {exporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-                                Export Bad
+                                {t('history.exportBad')}
                             </Button>
                             <Button
                                 size="sm"
@@ -424,7 +426,7 @@ const History = () => {
                                 disabled={exportingHumanEval}
                             >
                                 {exportingHumanEval ? <Loader2 className="w-4 h-4 animate-spin" /> : <Star className="w-4 h-4" />}
-                                Export Human Eval
+                                {t('history.exportEval')}
                             </Button>
                         </>
                     )}
@@ -437,7 +439,7 @@ const History = () => {
                             disabled={deleting}
                         >
                             {deleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
-                            Xóa ({selectedIds.length})
+                            {t('history.deleteSelected')} ({selectedIds.length})
                         </Button>
                     )}
                     {/* Delete all - Admin only */}
@@ -449,7 +451,7 @@ const History = () => {
                             disabled={deleting || items.length === 0}
                         >
                             <Trash2 className="w-4 h-4" />
-                            Xóa tất cả
+                            {t('history.deleteAll')}
                         </Button>
                     )}
                 </div>
@@ -463,7 +465,7 @@ const History = () => {
                         onChange={(e) => setFilters(f => ({ ...f, model: e.target.value }))}
                         className="border border-slate-200 rounded-lg px-3 py-2 text-sm"
                     >
-                        <option value="">Tất cả Model</option>
+                        <option value="">{t('history.allModels')}</option>
                         <option value="vit5_fin">ViT5 Financial v2</option>
                         <option value="qwen">Qwen</option>
                         <option value="phobert_finance">PhoBERT Finance</option>
@@ -473,26 +475,26 @@ const History = () => {
                         onChange={(e) => setFilters(f => ({ ...f, rating: e.target.value }))}
                         className="border border-slate-200 rounded-lg px-3 py-2 text-sm"
                     >
-                        <option value="">Tất cả Rating</option>
-                        <option value="good">👍 Good</option>
-                        <option value="bad">👎 Bad</option>
-                        <option value="neutral">😐 Neutral</option>
+                        <option value="">{t('history.allRatings')}</option>
+                        <option value="good">{t('common.good')}</option>
+                        <option value="bad">{t('common.bad')}</option>
+                        <option value="neutral">{t('common.neutral')}</option>
                     </select>
                     <select
                         value={filters.has_feedback}
                         onChange={(e) => setFilters(f => ({ ...f, has_feedback: e.target.value }))}
                         className="border border-slate-200 rounded-lg px-3 py-2 text-sm"
                     >
-                        <option value="">Tất cả</option>
-                        <option value="true">Đã đánh giá</option>
-                        <option value="false">Chưa đánh giá</option>
+                        <option value="">{t('history.allFeedback')}</option>
+                        <option value="true">{t('history.hasFeedback')}</option>
+                        <option value="false">{t('history.noFeedback')}</option>
                     </select>
                     <Button
                         size="sm"
                         className="bg-blue-600 hover:bg-blue-700 text-white"
                         onClick={() => setPagination(p => ({ ...p, page: 1 }))}
                     >
-                        Áp dụng
+                        {t('common.apply')}
                     </Button>
                 </div>
             )}
@@ -519,12 +521,12 @@ const History = () => {
                                         className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
                                     />
                                 </th>
-                                <th className="text-left py-3 px-4 text-xs font-semibold text-slate-500 uppercase">Văn bản gốc</th>
-                                <th className="text-left py-3 px-4 text-xs font-semibold text-slate-500 uppercase">Tóm tắt</th>
-                                <th className="text-left py-3 px-4 text-xs font-semibold text-slate-500 uppercase">Model</th>
-                                <th className="text-left py-3 px-4 text-xs font-semibold text-slate-500 uppercase">Thời gian</th>
-                                <th className="text-left py-3 px-4 text-xs font-semibold text-slate-500 uppercase">Đánh giá</th>
-                                <th className="text-center py-3 px-4 text-xs font-semibold text-slate-500 uppercase">Thao tác</th>
+                                <th className="text-left py-3 px-4 text-xs font-semibold text-slate-500 uppercase">{t('history.originalCol')}</th>
+                                <th className="text-left py-3 px-4 text-xs font-semibold text-slate-500 uppercase">{t('history.summaryCol')}</th>
+                                <th className="text-left py-3 px-4 text-xs font-semibold text-slate-500 uppercase">{t('history.modelCol')}</th>
+                                <th className="text-left py-3 px-4 text-xs font-semibold text-slate-500 uppercase">{t('history.timeCol')}</th>
+                                <th className="text-left py-3 px-4 text-xs font-semibold text-slate-500 uppercase">{t('history.ratingCol')}</th>
+                                <th className="text-center py-3 px-4 text-xs font-semibold text-slate-500 uppercase">{t('history.actionsCol')}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -532,13 +534,13 @@ const History = () => {
                                 <tr>
                                     <td colSpan={7} className="py-12 text-center">
                                         <Loader2 className="w-8 h-8 text-blue-600 animate-spin mx-auto" />
-                                        <p className="text-slate-500 mt-2">Đang tải...</p>
+                                        <p className="text-slate-500 mt-2">{t('common.loading')}</p>
                                     </td>
                                 </tr>
                             ) : items.length === 0 ? (
                                 <tr>
                                     <td colSpan={7} className="py-12 text-center text-slate-400">
-                                        Chưa có lịch sử tóm tắt nào
+                                        {t('history.noHistory')}
                                     </td>
                                 </tr>
                             ) : (
@@ -602,7 +604,7 @@ const History = () => {
                                                             ? 'bg-emerald-100 text-emerald-600'
                                                             : 'text-slate-400 hover:bg-emerald-100 hover:text-emerald-600'
                                                         }`}
-                                                    title={item.feedback?.human_eval ? 'Đã có Human Eval - sửa qua ⭐' : 'Tốt'}
+                                                    title={item.feedback?.human_eval ? t('history.hasHumanEval') : t('common.good')}
                                                 >
                                                     <ThumbsUp className="w-4 h-4" />
                                                 </button>
@@ -615,28 +617,28 @@ const History = () => {
                                                             ? 'bg-red-100 text-red-600'
                                                             : 'text-slate-400 hover:bg-red-100 hover:text-red-600'
                                                         }`}
-                                                    title={item.feedback?.human_eval ? 'Đã có Human Eval - sửa qua ⭐' : 'Tệ'}
+                                                    title={item.feedback?.human_eval ? t('history.hasHumanEval') : t('common.bad')}
                                                 >
                                                     <ThumbsDown className="w-4 h-4" />
                                                 </button>
                                                 <button
                                                     onClick={() => openHumanEval(item)}
                                                     className={`p-1.5 rounded hover:bg-amber-100 ${item.feedback?.human_eval ? 'bg-amber-100 text-amber-600' : 'text-slate-400 hover:text-amber-600'}`}
-                                                    title="Human Evaluation"
+                                                    title={t('history.humanEvalTitle')}
                                                 >
                                                     <Star className="w-4 h-4" />
                                                 </button>
                                                 <button
                                                     onClick={() => openDetail(item)}
                                                     className="p-1.5 rounded hover:bg-blue-100 text-slate-400 hover:text-blue-600"
-                                                    title="Chi tiết"
+                                                    title={t('common.detail')}
                                                 >
                                                     <Eye className="w-4 h-4" />
                                                 </button>
                                                 <button
                                                     onClick={() => handleDeleteOne(item.id)}
                                                     className="p-1.5 rounded hover:bg-red-100 text-slate-400 hover:text-red-600"
-                                                    title="Xóa"
+                                                    title={t('common.delete')}
                                                 >
                                                     <Trash2 className="w-4 h-4" />
                                                 </button>
@@ -653,7 +655,7 @@ const History = () => {
                 <div className="flex flex-col sm:flex-row items-center justify-between p-4 border-t border-slate-200 bg-gradient-to-r from-slate-50 to-white gap-4">
                     {/* Left: Page size selector */}
                     <div className="flex items-center gap-3">
-                        <span className="text-sm text-slate-500">Hiển thị</span>
+                        <span className="text-sm text-slate-500">{t('history.showCount')}</span>
                         <select
                             value={pagination.pageSize}
                             onChange={(e) => setPagination(p => ({ ...p, pageSize: Number(e.target.value), page: 1 }))}
@@ -664,21 +666,21 @@ const History = () => {
                             <option value={15}>15</option>
                             <option value={20}>20</option>
                         </select>
-                        <span className="text-sm text-slate-500">/ trang</span>
+                        <span className="text-sm text-slate-500">{t('common.perPage')}</span>
                     </div>
 
                     {/* Center: Info */}
                     <div className="text-sm text-slate-600 font-medium">
                         {pagination.total > 0 ? (
                             <>
-                                Hiển thị <span className="text-blue-600">{(pagination.page - 1) * pagination.pageSize + 1}</span>
+                                {t('history.showCount')} <span className="text-blue-600">{(pagination.page - 1) * pagination.pageSize + 1}</span>
                                 {' - '}
                                 <span className="text-blue-600">{Math.min(pagination.page * pagination.pageSize, pagination.total)}</span>
-                                {' trên '}
-                                <span className="font-bold text-slate-800">{pagination.total}</span> kết quả
+                                {' ' + t('history.onTotal') + ' '}
+                                <span className="font-bold text-slate-800">{pagination.total}</span> {t('history.resultsLabel')}
                             </>
                         ) : (
-                            'Không có kết quả'
+                            t('common.noResults')
                         )}
                     </div>
 
@@ -689,7 +691,7 @@ const History = () => {
                             onClick={() => handlePageChange(1)}
                             disabled={pagination.page <= 1}
                             className="p-2 rounded-lg hover:bg-blue-100 disabled:opacity-40 disabled:cursor-not-allowed text-slate-600 hover:text-blue-600 transition-colors"
-                            title="Trang đầu"
+                            title={t('history.firstPage')}
                         >
                             <ChevronsLeft className="w-4 h-4" />
                         </button>
@@ -699,7 +701,7 @@ const History = () => {
                             onClick={() => handlePageChange(pagination.page - 1)}
                             disabled={pagination.page <= 1}
                             className="p-2 rounded-lg hover:bg-blue-100 disabled:opacity-40 disabled:cursor-not-allowed text-slate-600 hover:text-blue-600 transition-colors"
-                            title="Trang trước"
+                            title={t('history.prevPage')}
                         >
                             <ChevronLeft className="w-4 h-4" />
                         </button>
@@ -771,7 +773,7 @@ const History = () => {
                             onClick={() => handlePageChange(pagination.page + 1)}
                             disabled={pagination.page >= pagination.totalPages}
                             className="p-2 rounded-lg hover:bg-blue-100 disabled:opacity-40 disabled:cursor-not-allowed text-slate-600 hover:text-blue-600 transition-colors"
-                            title="Trang sau"
+                            title={t('history.nextPage')}
                         >
                             <ChevronRight className="w-4 h-4" />
                         </button>
@@ -780,7 +782,7 @@ const History = () => {
                             onClick={() => handlePageChange(pagination.totalPages)}
                             disabled={pagination.page >= pagination.totalPages}
                             className="p-2 rounded-lg hover:bg-blue-100 disabled:opacity-40 disabled:cursor-not-allowed text-slate-600 hover:text-blue-600 transition-colors"
-                            title="Trang cuối"
+                            title={t('history.lastPage')}
                         >
                             <ChevronsRight className="w-4 h-4" />
                         </button>
@@ -793,7 +795,7 @@ const History = () => {
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
                     <div className="bg-white rounded-2xl shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
                         <div className="p-6 border-b border-slate-200 flex justify-between items-center">
-                            <h2 className="text-xl font-bold text-slate-800">Chi tiết & Feedback</h2>
+                            <h2 className="text-xl font-bold text-slate-800">{t('history.detailTitle')}</h2>
                             <button onClick={() => setShowModal(false)} className="p-2 hover:bg-slate-100 rounded-lg">
                                 <X className="w-5 h-5" />
                             </button>
@@ -802,7 +804,7 @@ const History = () => {
                         <div className="p-6 space-y-6">
                             {/* Original text */}
                             <div>
-                                <h3 className="text-sm font-semibold text-slate-500 mb-2">Văn bản gốc</h3>
+                                <h3 className="text-sm font-semibold text-slate-500 mb-2">{t('common.original')}</h3>
                                 <div className="bg-slate-50 p-4 rounded-lg text-sm text-slate-700 max-h-40 overflow-y-auto">
                                     {selectedItem.input_text}
                                 </div>
@@ -810,7 +812,7 @@ const History = () => {
 
                             {/* Generated summary */}
                             <div>
-                                <h3 className="text-sm font-semibold text-slate-500 mb-2">Tóm tắt (AI tạo)</h3>
+                                <h3 className="text-sm font-semibold text-slate-500 mb-2">{t('history.aiGenerated')}</h3>
                                 <div className="bg-blue-50 p-4 rounded-lg text-sm text-slate-700">
                                     {selectedItem.summary}
                                 </div>
@@ -820,19 +822,19 @@ const History = () => {
                             <div className="grid grid-cols-4 gap-4">
                                 <div className="bg-slate-50 p-3 rounded-lg text-center">
                                     <div className="text-lg font-bold text-slate-700">{selectedItem.metrics?.input_words || 0}</div>
-                                    <div className="text-xs text-slate-500">Từ gốc</div>
+                                    <div className="text-xs text-slate-500">{t('history.inputWordsLabel')}</div>
                                 </div>
                                 <div className="bg-slate-50 p-3 rounded-lg text-center">
                                     <div className="text-lg font-bold text-blue-600">{selectedItem.metrics?.output_words || 0}</div>
-                                    <div className="text-xs text-slate-500">Từ tóm tắt</div>
+                                    <div className="text-xs text-slate-500">{t('history.outputWordsLabel')}</div>
                                 </div>
                                 <div className="bg-slate-50 p-3 rounded-lg text-center">
                                     <div className="text-lg font-bold text-emerald-600">{selectedItem.metrics?.compression_ratio?.toFixed(1) || 0}%</div>
-                                    <div className="text-xs text-slate-500">Tỷ lệ nén</div>
+                                    <div className="text-xs text-slate-500">{t('history.compressionLabel')}</div>
                                 </div>
                                 <div className="bg-slate-50 p-3 rounded-lg text-center">
                                     <div className="text-lg font-bold text-purple-600">{selectedItem.metrics?.processing_time_ms || 0}ms</div>
-                                    <div className="text-xs text-slate-500">Thời gian</div>
+                                    <div className="text-xs text-slate-500">{t('history.timeLabel')}</div>
                                 </div>
                             </div>
 
@@ -841,31 +843,31 @@ const History = () => {
                                 <div className="bg-gradient-to-r from-amber-50 to-orange-50 p-4 rounded-xl border border-amber-200">
                                     <h3 className="text-sm font-semibold text-amber-900 mb-3 flex items-center gap-2">
                                         <Star className="w-4 h-4" />
-                                        Human Evaluation Scores
+                                        {t('history.humanEvalScores')}
                                     </h3>
                                     <div className="grid grid-cols-4 gap-3">
                                         {selectedItem.feedback.human_eval.fluency && (
                                             <div className="bg-white p-3 rounded-lg text-center">
                                                 <div className="text-xl font-bold text-amber-600">{selectedItem.feedback.human_eval.fluency}/5</div>
-                                                <div className="text-xs text-slate-600">Fluency</div>
+                                                <div className="text-xs text-slate-600">{t('compare.fluency')}</div>
                                             </div>
                                         )}
                                         {selectedItem.feedback.human_eval.coherence && (
                                             <div className="bg-white p-3 rounded-lg text-center">
                                                 <div className="text-xl font-bold text-amber-600">{selectedItem.feedback.human_eval.coherence}/5</div>
-                                                <div className="text-xs text-slate-600">Coherence</div>
+                                                <div className="text-xs text-slate-600">{t('compare.coherence')}</div>
                                             </div>
                                         )}
                                         {selectedItem.feedback.human_eval.relevance && (
                                             <div className="bg-white p-3 rounded-lg text-center">
                                                 <div className="text-xl font-bold text-amber-600">{selectedItem.feedback.human_eval.relevance}/5</div>
-                                                <div className="text-xs text-slate-600">Relevance</div>
+                                                <div className="text-xs text-slate-600">{t('compare.relevance')}</div>
                                             </div>
                                         )}
                                         {selectedItem.feedback.human_eval.consistency && (
                                             <div className="bg-white p-3 rounded-lg text-center">
                                                 <div className="text-xl font-bold text-amber-600">{selectedItem.feedback.human_eval.consistency}/5</div>
-                                                <div className="text-xs text-slate-600">Consistency</div>
+                                                <div className="text-xs text-slate-600">{t('compare.consistency')}</div>
                                             </div>
                                         )}
                                     </div>
@@ -876,7 +878,7 @@ const History = () => {
                             <div className="border-t border-slate-200 pt-6">
                                 <h3 className="text-sm font-semibold text-slate-500 mb-4 flex items-center gap-2">
                                     <Edit3 className="w-4 h-4" />
-                                    Đánh giá của bạn
+                                    {t('history.yourRating')}
                                 </h3>
 
                                 {/* Rating buttons */}
@@ -892,7 +894,7 @@ const History = () => {
                                                 : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                                                 }`}
                                         >
-                                            {r === 'good' ? <><ThumbsUp className="w-4 h-4" /> Tốt</> : r === 'bad' ? <><ThumbsDown className="w-4 h-4" /> Tệ</> : 'Trung bình'}
+                                            {r === 'good' ? <><ThumbsUp className="w-4 h-4" /> {t('common.good')}</> : r === 'bad' ? <><ThumbsDown className="w-4 h-4" /> {t('common.bad')}</> : t('common.neutral')}
                                         </button>
                                     ))}
                                 </div>
@@ -901,7 +903,7 @@ const History = () => {
                                 <textarea
                                     value={feedbackForm.comment}
                                     onChange={(e) => setFeedbackForm(f => ({ ...f, comment: e.target.value }))}
-                                    placeholder="Ghi chú (tùy chọn)..."
+                                    placeholder={t('history.commentPlaceholder')}
                                     className="w-full border border-slate-200 rounded-lg p-3 text-sm resize-none h-20 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 />
 
@@ -909,12 +911,12 @@ const History = () => {
                                 {feedbackForm.rating === 'bad' && (
                                     <div className="mt-4">
                                         <label className="text-sm font-medium text-slate-600 block mb-2">
-                                            Bản tóm tắt đã sửa (dùng cho training):
+                                            {t('history.correctedLabel')}
                                         </label>
                                         <textarea
                                             value={feedbackForm.corrected_summary}
                                             onChange={(e) => setFeedbackForm(f => ({ ...f, corrected_summary: e.target.value }))}
-                                            placeholder="Nhập bản tóm tắt đúng để cải thiện model..."
+                                            placeholder={t('history.correctedPlaceholder')}
                                             className="w-full border border-slate-200 rounded-lg p-3 text-sm resize-none h-24 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                         />
                                     </div>
@@ -929,7 +931,7 @@ const History = () => {
                                 className="bg-slate-100 hover:bg-slate-200 text-slate-700"
                                 onClick={() => setShowModal(false)}
                             >
-                                Đóng
+                                {t('common.close')}
                             </Button>
                             <Button
                                 size="sm"
@@ -938,7 +940,7 @@ const History = () => {
                                 disabled={!feedbackForm.rating || savingFeedback}
                             >
                                 {savingFeedback ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                                Lưu đánh giá
+                                {t('history.saveFeedback')}
                             </Button>
                         </div>
                     </div>
