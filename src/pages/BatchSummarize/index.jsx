@@ -399,9 +399,16 @@ const BatchSummarize = () => {
                                             style={{ width: `${progress}%` }}
                                         />
                                     </div>
-                                    <p className="text-xs text-slate-400 mt-2 text-center">
-                                        ✅ {successCount} {t('common.success')} • ❌ {failCount} {t('common.failed')}
-                                    </p>
+                                    <div className="text-xs text-slate-400 mt-2 flex items-center justify-center gap-3">
+                                        <span className="inline-flex items-center gap-1">
+                                            <CheckCircle className="w-3.5 h-3.5 text-emerald-500" />
+                                            {successCount} {t('common.success')}
+                                        </span>
+                                        <span className="inline-flex items-center gap-1">
+                                            <XCircle className="w-3.5 h-3.5 text-red-500" />
+                                            {failCount} {t('common.failed')}
+                                        </span>
+                                    </div>
                                 </div>
                             )}
 
