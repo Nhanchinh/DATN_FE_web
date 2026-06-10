@@ -22,6 +22,7 @@ import {
 import { Button, HumanEvalModal } from '@/components/common';
 import { historyService } from '@/services';
 import { useAuth } from '@/hooks';
+import { parseApiDate } from '@/utils/helpers';
 
 /**
  * History Page - Trang lịch sử tóm tắt với feedback system
@@ -361,8 +362,15 @@ const History = () => {
 
     // Format date
     const formatDate = (dateStr) => {
-        const d = new Date(dateStr);
-        return d.toLocaleDateString('vi-VN') + ' ' + d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+        const date = parseApiDate(dateStr);
+        const options = { timeZone: 'Asia/Ho_Chi_Minh' };
+        const datePart = date.toLocaleDateString('vi-VN', options);
+        const timePart = date.toLocaleTimeString('vi-VN', {
+            ...options,
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+        return `${datePart} ${timePart}`;
     };
 
     // Truncate text

@@ -134,12 +134,7 @@ const Login = () => {
                     </a>
                 </div>
 
-                {/* Dev hint */}
-                <div className="mt-4 p-3 bg-slate-50 rounded-lg text-xs text-slate-500">
-                    <p className="font-medium mb-1">{t('login.testAccount')}</p>
-                    <p>Email: test@example.com</p>
-                    <p>{t('login.testPassword')}: secret123</p>
-                </div>
+               
             </form>
         </div>
     );

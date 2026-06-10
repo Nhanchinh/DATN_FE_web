@@ -1,15 +1,30 @@
 /**
+ * Parse an API datetime safely.
+ * MongoDB-backed legacy responses may omit timezone even though the value is UTC.
+ * @param {Date|string} date - Date object or date string
+ * @returns {Date} Parsed Date object
+ */
+export const parseApiDate = (date) => {
+    if (date instanceof Date) return date;
+
+    const value = String(date);
+    const hasTimezone = /(?:Z|[+-]\d{2}:\d{2})$/i.test(value);
+    return new Date(hasTimezone ? value : `${value}Z`);
+};
+
+/**
  * Format date to locale string
  * @param {Date|string} date - Date object or date string
  * @param {string} locale - Locale string (default: 'vi-VN')
  * @returns {string} Formatted date string
  */
 export const formatDate = (date, locale = 'vi-VN') => {
-    const dateObj = new Date(date);
+    const dateObj = parseApiDate(date);
     return dateObj.toLocaleDateString(locale, {
         year: 'numeric',
         month: 'long',
         day: 'numeric',
+        timeZone: 'Asia/Ho_Chi_Minh',
     });
 };
 
@@ -20,13 +35,14 @@ export const formatDate = (date, locale = 'vi-VN') => {
  * @returns {string} Formatted date and time string
  */
 export const formatDateTime = (date, locale = 'vi-VN') => {
-    const dateObj = new Date(date);
+    const dateObj = parseApiDate(date);
     return dateObj.toLocaleString(locale, {
         year: 'numeric',
         month: 'long',
         day: 'numeric',
         hour: '2-digit',
         minute: '2-digit',
+        timeZone: 'Asia/Ho_Chi_Minh',
     });
 };
 

@@ -96,10 +96,12 @@ const Playground = () => {
 
             const inputWords = input.split(/\s+/).filter(w => w).length;
             const outputWords = summaryText.split(/\s+/).filter(w => w).length;
-            const compressionRatio = ((1 - outputWords / inputWords) * 100).toFixed(1);
+            const compressionRatio = inputWords > 0
+                ? Number(((1 - outputWords / inputWords) * 100).toFixed(1))
+                : 0;
 
             setMetrics({
-                compression: parseFloat(compressionRatio),
+                compression: compressionRatio,
                 inputWords,
                 outputWords,
                 time: `${timeSeconds}s`,
@@ -114,7 +116,7 @@ const Playground = () => {
                     model_used: response.model_used || model,
                     input_words: inputWords,
                     output_words: outputWords,
-                    compression_ratio: parseFloat(compressionRatio),
+                    compression_ratio: compressionRatio,
                     processing_time_ms: Math.round((endTime - startTime)),
                     colab_inference_ms: response.colab_inference_ms || null
                 });
